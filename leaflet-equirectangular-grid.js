@@ -1,6 +1,6 @@
 
 
-L.GridCanvasLayer = L.GridLayer.extend({
+L.EquirectangularGrid = L.GridLayer.extend({
 
 
 	options: {},
@@ -84,6 +84,6 @@ L.GridCanvasLayer = L.GridLayer.extend({
 });
 
 
-L.gridCanvasLayer = function () {
-	return new L.GridCanvasLayer();
+L.equirectangularGrid = function () {
+	return new L.EquirectangularGrid();
 };
