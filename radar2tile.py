@@ -92,5 +92,5 @@ def decode_rle_levelvalues(compr_data, ndata, nbit, maxv, level_values):
 file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
 data = parse_radar(file)
 pprint(data)
-to_image_tile(data)
+grib2tile.to_image_tile(data)
 
