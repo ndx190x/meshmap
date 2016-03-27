@@ -89,8 +89,19 @@ def decode_rle_levelvalues(compr_data, ndata, nbit, maxv, level_values):
     out[k: k + count] = pv
     return out
 
+def_tile = {
+    "lat1": 48,
+    "lon1": 118,
+    "lat2": 20,
+    "lon2": 150,
+    "nlats": 3360,
+    "nlons": 2560,
+    "tile_width": 80,
+    "tile_height": 120
+}
+
 file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
 data = parse_radar(file)
 pprint(data)
-grib2tile.to_image_tile(data)
+grib2tile.to_image_tile(data, def_tile, 0)
 
