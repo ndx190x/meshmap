@@ -105,5 +105,7 @@ def_tile = {
 file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
 data = parse_radar(file)
 pprint(data)
-grib2tile.to_image_tile(data, def_tile, 2, "tile2")
+grib2tile.to_image_tile(data, def_tile, 0, (0, 0), "tile2")
+grib2tile.to_image_tile(data, def_tile, 1, (0, 0), "tile2")
+grib2tile.to_image_tile(data, def_tile, 2, (1, 1), "tile2")
 
