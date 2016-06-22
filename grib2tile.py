@@ -3,28 +3,27 @@ from PIL import Image
 import os
 
 
-def to_image_tile(data, def_tile, zoom, pick, directory):
-    directory += "/%d" % (zoom)
+def to_image_tile(data, def_tile, z, thinout, pick, directory):
+    directory += "/%d" % (z)
     os.mkdir(directory)
     print directory
 
-    z = 2 ** zoom
-    dx = def_tile["width"]  * z
-    dy = def_tile["height"] * z
+    dx = def_tile["nx"] / 2 ** z
+    dy = def_tile["ny"] / 2 ** z
 
-    for base_y in range(0, def_tile["ny"], dy):
-        for base_x in range(0, def_tile["nx"], dx):
-            #print("%d/%d/%d" % (zoom, base_x / dx, base_y / dy))
-            image_array = np.empty([def_tile["height"], def_tile["width"], 4])
-            for y in range (0, def_tile["height"]):
-                if base_y + z * y < def_tile["ny"]:
-                    for x in range (0, def_tile["width"]):
-                        X = base_x + z * x + pick[0]
-                        Y = base_y + z * y + pick[1]
-                        image_array[y][x] = convert_rgba(data[Y][X])
-                else:
-                    for x in range (0, def_tile["width"]):
-                        image_array[y][x] = convert_rgba(0)
+    t = 2 ** thinout
+    height = dy / t
+    width = dx / t
+
+    for base_y in range(0, def_tile["ny"] - 1, dy):
+        for base_x in range(0, def_tile["nx"] - 1, dx):
+            #print("%d/%d/%d" % (z, base_x / dx, base_y / dy))
+            image_array = np.empty([height, width, 4])
+            for y in range (0, height):
+                for x in range (0, width):
+                    X = base_x + t * x + pick[0]
+                    Y = base_y + t * y + pick[1]
+                    image_array[y][x] = convert_rgba(data[Y][X])
             save_image_fromarray(
                 image_array,
                 "%s/%d_%d.png" % (directory, base_x / dx, base_y / dy)
