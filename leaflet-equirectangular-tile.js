@@ -1,21 +1,32 @@
 /*
  * @class L.equrectangularTile
- * @inherits GridLayer
+ * @inherits TileLayer
+ * @author Yuta Tachibana
  *
+ * for leaflet v1.0.0-rc1
  *
- *
- *
- *
+ * fit equirectangular projection tiles to web mercator (spherical mercator)
  *
  */
 
-L.EquirectangularTile = L.GridLayer.extend({
+L.EquirectangularTile = L.TileLayer.extend({
 
 
-	options: {},
+	options: {
+		bounds: [[48.0, 118.0], [20.0, 150.0]],
+		tileZoom: function (mqpZoom) {  // TODO: fractal zoom, auto fit?
+			if (mapZoom <= 4){
+				return 1;
+			}else if (mapZoom >= 6){
+				return 3;
+			}else{
+				return 2;
+			}
+		},
+	},
 
-	initialize: function () {
-
+	initialize: function (options) {
+		options = L.setOptions(this, options);
 	},
 
 	createTile: function (coord, done) {
@@ -24,24 +35,46 @@ L.EquirectangularTile = L.GridLayer.extend({
 
 	// !! 
 	getTileSize: function (coords) {
-
+		// tile latlonbounds -> point bounds -> height, width
 	},
 
 
 	// override GridLayer Methods
 	//
 	//
-	// invalid _tileCoordsToBounds, _keyToBounds, _globalTileRange
+	// _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
 
-	_pxBoundsToTileRange: function (bounds) {
+	// map latlonbounds -> coords bounds
+	_pxBoundsToTileRange: function (bounds) {	
+		var mapBounds = this._map.getBounds(),
+			tileBounds = this.options.bounds,
+			tileOrigin = tileBounds.getNortWest(),
+			zoom = this._map.getZoom(),
+			tileZoom = this.optinos.tileZoom(zoom);
 
+		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** tileZoom,
+			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** tileZoom;
+
+		var N = Math.ceil((mapBounds.getNorth() - tileOrigin.lat) / tileLat),
+			W = Math.ceil(mapBounds.getWest() - tileOrigin.lng) / tileLon),
+			S = Math.floor(mapBounds.getSouth() - tileorigin.lat) / tileLat),
+			E = Math.floor((mapBounds.getEast() - tileOrigin.lng) / tileLon);
+
+		this._tileZoom = tileZoom;
+
+		return new L.Bounds(
+			[Math.max(N, 0), Math.max(W, 0)],
+			[Math.min(S, 2 ** tileZoom), Math.min(E, 2 ** tileZoom)]
+		);
 	},
-	
+
 	_isValidTile: function (coords) {
+
+		// coords 
+
 	},
 	
 	_getTilePos: function (coords) {
-		return coords.scaleBy(this.getTileSize()).subtract(this._level.origin);
 	},
 	
 	
