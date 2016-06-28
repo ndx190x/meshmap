@@ -23,11 +23,13 @@ L.EquirectangularTile = L.TileLayer.extend({
 				return 2;
 			}
 		},
+		opacity: 0.7
 	},
 
 
 	getTileUrl: function (coords) {
-		return "";
+		return "http://fakeimg.pl/320x420/" + randomColor().slice(1) +
+			"/?text=" + coords.z + "/" + coords.x + "/" + coords.y;
 	},
 
 	// !! 
