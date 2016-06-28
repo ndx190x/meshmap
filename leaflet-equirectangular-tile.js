@@ -25,18 +25,16 @@ L.EquirectangularTile = L.TileLayer.extend({
 		},
 	},
 
-	initialize: function (options) {
-		options = L.setOptions(this, options);
-	},
 
-	createTile: function (coord, done) {
+	getTileUrl: function (coords) {
 
 	},
 
 	// !! 
-	getTileSize: function (coords) {
+	//getTileSize: function () {
 		// tile latlonbounds -> point bounds -> height, width
-	},
+	//},
+
 
 
 	// override GridLayer Methods
@@ -50,7 +48,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 			tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNortWest(),
 			zoom = this._map.getZoom(),
-			tileZoom = this.optinos.tileZoom(zoom);
+			tileZoom = this.options.tileZoom(zoom);
 
 		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** tileZoom,
 			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** tileZoom;
@@ -63,42 +61,74 @@ L.EquirectangularTile = L.TileLayer.extend({
 		this._tileZoom = tileZoom;
 
 		return new L.Bounds(
-			[Math.max(N, 0), Math.max(W, 0)],
-			[Math.min(S, 2 ** tileZoom), Math.min(E, 2 ** tileZoom)]
+			[Math.max(W, 0), Math.max(N, 0)],
+			[Math.min(E, 2 ** tileZoom), Math.min(S, 2 ** tileZoom)]
 		);
 	},
 
 	_isValidTile: function (coords) {
-
-		// coords 
-
+		return true;
 	},
 	
 	_getTilePos: function (coords) {
+		var tileBounds = this.options.bounds,
+			tileOrigin = tileBounds.getNortWest(),
+			zoom = coords.z,
+			tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** zoom,
+			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** zoom;
+
+		var latlon = new L.LatLon(
+			tileOrigin.getNorth() + tileLat * coords.y,
+			tileOrigin.getWest() + tileLon * coords.x
+		);
+
+		return this._map.project(latlon);
+	},
+	
+	_getTileSizeCoords: function (coords) {
+		var nw = _getTilePos(coords),
+			se = _getTilePos({ x: coords.x + 1, y coords.y + 1, z: coords.z });
+
+		return se.substract(nw);
 	},
 	
 	
-	// !! tile width and height are set in createTile() !!
-	_initTile: function (tile) {
-		L.DomUtil.addClass(tile, 'leaflet-tile');
+	_addTile: function (coords, container) {
+		var tilePos = this._getTilePos(coords),
+		    key = this._tileCoordsToKey(coords);
 
-		// var tileSize = this.getTileSize();
-		// tile.style.width = tileSize.x + 'px';
-		// tile.style.height = tileSize.y + 'px';
+		var tile = this.createTile(this._wrapCoords(coords), L.bind(this._tileReady, this, coords));
 
-		tile.onselectstart = L.Util.falseFn;
-		tile.onmousemove = L.Util.falseFn;
+		this._initTile(tile);
+		
+		// reset tile width, height
+		var tileSize = this.getTileSizeCoords();
+		tile.style.width = tileSize.x + 'px';
+		tile.style.height = tileSize.y + 'px';
 
-		// update opacity on tiles in IE7-8 because of filter inheritance problems
-		if (L.Browser.ielt9 && this.options.opacity < 1) {
-			L.DomUtil.setOpacity(tile, this.options.opacity);
+		// if createTile is defined with a second argument ("done" callback),
+		// we know that tile is async and will be ready later; otherwise
+		if (this.createTile.length < 2) {
+			// mark tile as ready, but delay one frame for opacity animation to happen
+			L.Util.requestAnimFrame(L.bind(this._tileReady, this, coords, null, tile));
 		}
 
-		// without this hack, tiles disappear after zoom on Chrome for Android
-		// https://github.com/Leaflet/Leaflet/issues/2078
-		if (L.Browser.android && !L.Browser.android23) {
-			tile.style.WebkitBackfaceVisibility = 'hidden';
-		}
+		L.DomUtil.setPosition(tile, tilePos);
+
+		// save tile in cache
+		this._tiles[key] = {
+			el: tile,
+			coords: coords,
+			current: true
+		};
+
+		container.appendChild(tile);
+		// @event tileloadstart: TileEvent
+		// Fired when a tile is requested and starts loading.
+		this.fire('tileloadstart', {
+			tile: tile,
+			coords: coords
+		});
 	},
 });
 
