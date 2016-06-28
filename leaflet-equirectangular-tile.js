@@ -43,12 +43,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 	// _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
 
 	// map latlonbounds -> coords bounds
-	_pxBoundsToTileRange: function (bounds) {
-		var mapBounds = this._map.getBounds(),
-			tileBounds = this.options.bounds,
-			tileOrigin = tileBounds.getNorthWest(),
-			zoom = this._map.getZoom(),
-			tileZoom = this.options.tileZoom(zoom);
+	_getTileRange: function (mapBounds, tileZoom) {
+		var tileBounds = this.options.bounds,
+			tileOrigin = tileBounds.getNorthWest();
 
 		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** tileZoom,
 			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** tileZoom;
@@ -92,10 +89,42 @@ L.EquirectangularTile = L.TileLayer.extend({
 		return se.subtract(nw);
 	},
 	
-	
-	_resetGrid: function () {
+	_setView: function (center, zoom, noPrune, noUpdate) {
+		var tileZoom = this.options.tileZoom(zoom);
+		if ((this.options.maxZoom !== undefined && tileZoom > this.options.maxZoom) ||
+		    (this.options.minZoom !== undefined && tileZoom < this.options.minZoom)) {
+			tileZoom = undefined;
+		}
+
+		var tileZoomChanged = (tileZoom !== this._tileZoom);
+
+		if (!noUpdate || tileZoomChanged) {
+
+			this._tileZoom = tileZoom;
+
+			if (this._abortLoading) {
+				this._abortLoading();
+			}
+
+			this._updateLevels();
+
+			if (tileZoom !== undefined) {
+				this._update(center);
+			}
+
+			if (!noPrune) {
+				this._pruneTiles();
+			}
+
+			// Flag to prevent _updateOpacity from pruning tiles during
+			// a zoom anim or a pinch gesture
+			this._noPrune = !!noPrune;
+		}
+
+		this._setZoomTransforms(center, zoom);
 	},
 	
+
 	// Private method to load tiles in the grid's active zoom level according to map bounds
 	_update: function (center) {
 		var map = this._map;
@@ -105,8 +134,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (center === undefined) { center = map.getCenter(); }
 		if (this._tileZoom === undefined) { return; }	// if out of minzoom/maxzoom
 
-		var pixelBounds = this._getTiledPixelBounds(center),
-		    tileRange = this._pxBoundsToTileRange(pixelBounds),
+		var tileZoom = this.options.tileZoom(map.getZoom()),
+			tileRange = this._getTileRange(map.getBounds(), tileZoom),
 		    tileCenter = tileRange.getCenter(),
 		    queue = [];
 
@@ -116,15 +145,13 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		// _update just loads more tiles. If the tile zoom level differs too much
 		// from the map's, let _setView reset levels and prune old tiles.
-	//	if (Math.abs(zoom - this._tileZoom) > 1) { this._setView(center, zoom); return; }
+		if (Math.abs(tileZoom - this._tileZoom) > 1) { this._setView(center, zoom); return; }
 
 		// create a queue of coordinates to load tiles from
 		for (var j = tileRange.min.y; j <= tileRange.max.y; j++) {
 			for (var i = tileRange.min.x; i <= tileRange.max.x; i++) {
 				var coords = new L.Point(i, j);
 				coords.z = this._tileZoom;
-
-				if (!this._isValidTile(coords)) { continue; }
 
 				var tile = this._tiles[this._tileCoordsToKey(coords)];
 				if (tile) {
@@ -161,6 +188,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	_addTile: function (coords, container) {
+		console.log(coords);
 		var tilePos = this._getTilePos(coords),
 		    key = this._tileCoordsToKey(coords);
 
