@@ -13,7 +13,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 
 	options: {
-		bounds: new L.latLngBounds([48.0, 118.0], [20.0, 150.0]),
+		bounds: new L.latLngBounds([20.0, 118.0], [48.0, 150.0]),
 		tileZoom: function (mapZoom) {  // TODO: fractal zoom, auto fit?
 			if (mapZoom <= 4){
 				return 1;
@@ -29,7 +29,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 	getTileUrl: function (coords) {
 		return "http://fakeimg.pl/320x420/" + randomColor().slice(1) +
-			"/?text=" + coords.z + "/" + coords.x + "/" + coords.y;
+			"/?text=" + coords.ez + "/" + coords.x + "/" + coords.y;
 	},
 
 	// !! 
@@ -52,12 +52,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** tileZoom,
 			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** tileZoom;
 
-		var N = Math.ceil((mapBounds.getNorth() - tileOrigin.lat) / tileLat),
+		var N = Math.ceil((tileOrigin.lat - mapBounds.getNorth()) / tileLat),
 			W = Math.ceil((mapBounds.getWest() - tileOrigin.lng) / tileLon),
-			S = Math.floor((mapBounds.getSouth() - tileOrigin.lat) / tileLat),
+			S = Math.floor((tileOrigin.lat - mapBounds.getSouth()) / tileLat),
 			E = Math.floor((mapBounds.getEast() - tileOrigin.lng) / tileLon);
-
-		this._tileZoom = tileZoom;
 
 		return new L.Bounds(
 			[Math.max(W, 0), Math.max(N, 0)],
@@ -72,37 +70,36 @@ L.EquirectangularTile = L.TileLayer.extend({
 	_getTilePos: function (coords) {
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest(),
-			zoom = coords.z,
+			zoom = coords.ez,
 			tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / 2 ** zoom,
 			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / 2 ** zoom;
 
 		var latlon = new L.latLng(
-			tileOrigin.lat + tileLat * coords.y,
+			tileOrigin.lat - tileLat * coords.y,
 			tileOrigin.lng + tileLon * coords.x
 		);
 
-		return this._map.project(latlon);
+		console.log(latlon);
+
+		return this._map.project(latlon).subtract(this._level.origin);
 	},
 	
 	_getTileSizeCoords: function (coords) {
 		var nw = this._getTilePos(coords),
-			se = this._getTilePos({ x: coords.x + 1, y: coords.y + 1, z: coords.z });
+			se = this._getTilePos({ x: coords.x + 1, y: coords.y + 1, ez: coords.ez });
 
 		return se.subtract(nw);
 	},
 	
 	_setView: function (center, zoom, noPrune, noUpdate) {
-		var tileZoom = this.options.tileZoom(zoom);
-		if ((this.options.maxZoom !== undefined && tileZoom > this.options.maxZoom) ||
-		    (this.options.minZoom !== undefined && tileZoom < this.options.minZoom)) {
-			tileZoom = undefined;
-		}
-
+		console.log(zoom);
+		var tileZoom = Math.round(zoom);
 		var tileZoomChanged = (tileZoom !== this._tileZoom);
 
 		if (!noUpdate || tileZoomChanged) {
 
 			this._tileZoom = tileZoom;
+			this.tileZoom = this.options.tileZoom(tileZoom);
 
 			if (this._abortLoading) {
 				this._abortLoading();
@@ -136,7 +133,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (center === undefined) { center = map.getCenter(); }
 		if (this._tileZoom === undefined) { return; }	// if out of minzoom/maxzoom
 
-		var tileZoom = this.options.tileZoom(map.getZoom()),
+		var tileZoom = this.options.tileZoom(zoom),
 			tileRange = this._getTileRange(map.getBounds(), tileZoom),
 		    tileCenter = tileRange.getCenter(),
 		    queue = [];
@@ -147,13 +144,14 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		// _update just loads more tiles. If the tile zoom level differs too much
 		// from the map's, let _setView reset levels and prune old tiles.
-		if (Math.abs(tileZoom - this._tileZoom) > 1) { this._setView(center, zoom); return; }
+		if (Math.abs(tileZoom - this.tileZoom) > 1) { this._setView(center, zoom); return; }
 
 		// create a queue of coordinates to load tiles from
 		for (var j = tileRange.min.y; j <= tileRange.max.y; j++) {
 			for (var i = tileRange.min.x; i <= tileRange.max.x; i++) {
 				var coords = new L.Point(i, j);
 				coords.z = this._tileZoom;
+				coords.ez = this.tileZoom;
 
 				var tile = this._tiles[this._tileCoordsToKey(coords)];
 				if (tile) {
@@ -194,7 +192,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tilePos = this._getTilePos(coords),
 		    key = this._tileCoordsToKey(coords);
 
-		var tile = this.createTile(this._wrapCoords(coords), L.bind(this._tileReady, this, coords));
+		var tile = this.createTile(coords, L.bind(this._tileReady, this, coords));
 
 		this._initTile(tile);
 		
@@ -202,6 +200,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileSize = this._getTileSizeCoords(coords);
 		tile.style.width = tileSize.x + 'px';
 		tile.style.height = tileSize.y + 'px';
+		console.log(tileSize);
 
 		// if createTile is defined with a second argument ("done" callback),
 		// we know that tile is async and will be ready later; otherwise
@@ -210,6 +209,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 			L.Util.requestAnimFrame(L.bind(this._tileReady, this, coords, null, tile));
 		}
 
+		console.log(tilePos);
 		L.DomUtil.setPosition(tile, tilePos);
 
 		// save tile in cache
