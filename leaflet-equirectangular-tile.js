@@ -28,16 +28,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 
 	getTileUrl: function (coords) {
-		return "http://fakeimg.pl/320x420/" + randomColor().slice(1) +
-			"/?text=" + coords.ez + "/" + coords.x + "/" + coords.y;
+		return "tile3/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
 	},
-
-	// !! 
-	//getTileSize: function () {
-		// tile latlonbounds -> point bounds -> height, width
-	//},
-
-
 
 	// override GridLayer Methods
 	//
@@ -95,7 +87,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	_setView: function (center, zoom, noPrune, noUpdate) {
-		console.log(zoom);
 		var tileZoom = Math.round(zoom);
 		var tileZoomChanged = (tileZoom !== this._tileZoom);
 
@@ -191,7 +182,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	_addTile: function (coords, container) {
-		console.log(coords);
 		var tilePos = this._getTilePos(coords),
 		    key = this._tileCoordsToKey(coords);
 
@@ -212,7 +202,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 			L.Util.requestAnimFrame(L.bind(this._tileReady, this, coords, null, tile));
 		}
 
-		console.log(tilePos);
 		L.DomUtil.setPosition(tile, tilePos);
 
 		// save tile in cache
