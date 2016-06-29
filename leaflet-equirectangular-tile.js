@@ -193,7 +193,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileSize = this._getTileSizeCoords(coords);
 		tile.style.width = tileSize.x + 'px';
 		tile.style.height = tileSize.y + 'px';
-		console.log(tileSize);
+		tile.style['image-rendering'] = "pixelated";
 
 		// if createTile is defined with a second argument ("done" callback),
 		// we know that tile is async and will be ready later; otherwise
