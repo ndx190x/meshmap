@@ -59,7 +59,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		return new L.Bounds(
 			[Math.max(W, 0), Math.max(N, 0)],
-			[Math.min(E, 2 ** tileZoom), Math.min(S, 2 ** tileZoom)]
+			[Math.min(E, 2 ** tileZoom - 1), Math.min(S, 2 ** tileZoom - 1)]
 		);
 	},
 
