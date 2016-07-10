@@ -28,7 +28,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 
 	getTileUrl: function (coords) {
-		return "tile3/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
+		return "tile4/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
 	},
 
 	// override GridLayer Methods

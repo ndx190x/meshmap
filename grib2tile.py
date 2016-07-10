@@ -33,23 +33,19 @@ def convert_rgba(v):
     if v == 0:
         return [0, 0, 0, 0] # transparent
     elif v <= 1:
-        return [102, 255, 255, 255]
-    elif v <= 2:
-        return [9, 204, 255, 255]
-    elif v <= 4:
+        return [0, 255, 255, 255]
+    elif v <= 5:
         return [0, 153, 255, 255]
-    elif v <= 6:
-        return [51, 102, 255, 255]
     elif v <= 10:
-        return [51, 255, 0, 255]
+        return [0, 102, 255, 255]
     elif v <= 20:
-        return [51, 204, 0, 255]
-    elif v <= 40:
+        return [0, 255, 0, 255]
+    elif v <= 30:
         return [255, 255, 0, 255]
-    elif v <= 60:
-        return [102, 60, 102, 255]
+    elif v <= 50:
+        return [255, 153, 0, 255]
     else:
-        return [183, 0, 20, 255]
+        return [255, 0, 0, 255]
 
 # save as png 
 # http://pillow.readthedocs.org/en/latest/handbook/image-file-formats.html#png
