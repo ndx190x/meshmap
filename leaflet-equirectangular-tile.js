@@ -32,8 +32,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 
 	// override GridLayer Methods
-	//
-	//
 	// _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
 
 	// map latlonbounds -> coords bounds
@@ -194,12 +192,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.style.width = tileSize.x + 'px';
 		tile.style.height = tileSize.y + 'px';
 
-		// image-rendering
-		tile.style.msInterpolationMode = 'nearest-neighbor';
-		tile.style.imageRendering = '-webkit-crisp-edges';
-		tile.style.imageRendering = '-moz-crisp-edges';
-		tile.style.imageRendering = 'pixelated';
-
 		// if createTile is defined with a second argument ("done" callback),
 		// we know that tile is async and will be ready later; otherwise
 		if (this.createTile.length < 2) {
@@ -223,6 +215,56 @@ L.EquirectangularTile = L.TileLayer.extend({
 			tile: tile,
 			coords: coords
 		});
+	},
+	
+	createTile: function (coords, done) {
+		if (L.Browser.edge || L.Browser.safari){
+			return this.createCanvasTile(coords, done);
+		}else{
+			return this.createImageTile(coords, done);
+		}
+	},
+
+	createImageTile: function (coords, done) {
+		var tile = document.createElement('img');
+
+		L.DomEvent.on(tile, 'load', L.bind(this._tileOnLoad, this, done, tile));
+		L.DomEvent.on(tile, 'error', L.bind(this._tileOnError, this, done, tile));
+
+		tile.alt = '';
+		tile.src = this.getTileUrl(coords);
+		
+		// image-rendering
+		tile.style.msInterpolationMode = 'nearest-neighbor';
+		tile.style.imageRendering = '-webkit-crisp-edges';
+		tile.style.imageRendering = '-moz-crisp-edges';
+		tile.style.imageRendering = 'pixelated';
+
+		return tile;
+	},
+	
+	createCanvasTile: function (coords, done) {
+		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+
+		tile.width = 320;
+		tile.height = 420;
+
+		var ctx = tile.getContext('2d');
+
+		// pixcelated scaling
+		ctx.mozImageSmoothingEnabled = false;
+		ctx.webkitImageSmoothingEnabled = false;
+		ctx.msImageSmoothingEnabled = false;
+		ctx.imageSmoothingEnabled = false;
+
+		var img = new Image();
+		img.src = this.getTileUrl(coords);
+		img.onload = function () {
+			ctx.drawImage(img, 0, 0);
+			done(null, tile);
+		};
+
+		return tile;
 	},
 });
 
