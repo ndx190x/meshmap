@@ -218,7 +218,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	createTile: function (coords, done) {
-		if (L.Browser.edge || L.Browser.safari){
+		if (L.Browser.edge || (L.Browser.safari && !L.Browser.mobile)){
 			return this.createCanvasTile(coords, done);
 		}else{
 			return this.createImageTile(coords, done);
