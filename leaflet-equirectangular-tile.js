@@ -26,6 +26,24 @@ L.EquirectangularTile = L.TileLayer.extend({
 		opacity: 0.7
 	},
 
+	initialize: function (url, options) {
+
+		this._url = url;
+
+		options = L.setOptions(this, options);
+
+		// fix image-rendering does not work with css 3d
+		if (L.Browser.chrome || (L.Browser.safari && !L.Browser.mobile)) {
+			this._disable3DImageRendering = true;
+			L.Browser.ie3d = true; // hack: use tranaslate
+		}
+
+		// for https://github.com/Leaflet/Leaflet/issues/137
+		if (!L.Browser.android) {
+			this.on('tileunload', this._onTileRemove);
+		}
+	},
+
 
 	getTileUrl: function (coords) {
 		return "tile4/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
@@ -218,7 +236,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	createTile: function (coords, done) {
-		if (L.Browser.edge || (L.Browser.safari && !L.Browser.mobile)){
+		if (L.Browser.edge){
 			return this.createCanvasTile(coords, done);
 		}else{
 			return this.createImageTile(coords, done);
@@ -239,6 +257,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.style.imageRendering = '-webkit-crisp-edges';
 		tile.style.imageRendering = '-moz-crisp-edges';
 		tile.style.imageRendering = 'pixelated';
+
+		if (this._disable3DImageRendering) {
+			tile.style.willChange = 'initial';
+		}
 
 		return tile;
 	},
