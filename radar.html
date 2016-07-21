@@ -26,7 +26,11 @@
 	<script src="leaflet-equirectangular-tile.js"></script>
 	<script>
 		var map = new L.Map('map', {center: new L.LatLng(37.892, 137.571), zoom: 6});
-		map.addLayer(new L.Google("ROADMAP"));
+		//map.addLayer(new L.Google("ROADMAP"));
+
+		L.tileLayer('http://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+		  attribution: "<a href='http://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
+		}).addTo(map);
 
 		var radar = new L.EquirectangularTile();
 		radar.addTo(map);
