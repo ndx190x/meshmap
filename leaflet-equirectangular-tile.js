@@ -87,7 +87,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 			tileOrigin.lng + tileLon * coords.x
 		);
 
-		return this._map.project(latlon, coords.z).subtract(this._level.origin);
+		return this._map.project(latlon, coords.z).floor().subtract(this._level.origin);
 	},
 	
 	_getTileSizeCoords: function (coords) {
