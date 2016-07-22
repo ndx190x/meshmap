@@ -69,7 +69,8 @@ def parse_7_data(fileptr):
 
 
 def decode_rle_levelvalues(compr_data, ndata, nbit, maxv, level_values):
-    out = np.empty(ndata, dtype='float16')
+    #out = np.empty(ndata, dtype='float16')
+    out = np.empty(ndata, dtype='uint8')
     lngu = pow(2, nbit) - 1 - maxv
     pv = -1
     k = 0
@@ -82,12 +83,14 @@ def decode_rle_levelvalues(compr_data, ndata, nbit, maxv, level_values):
                 k += count
             count = 1
             n = 0
-            pv = level_values[v]
+            #pv = level_values[v]
+            pv = v
         else:
             count += pow(lngu, n) * (v - maxv - 1)
             n += 1
     out[k: k + count] = pv
     return out
+
 
 def_tile = {
     "lat1":    48,
@@ -103,7 +106,7 @@ def_tile = {
 file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
 data = parse_radar(file)
 pprint(data)
-grib2tile.to_image_tile(data, def_tile, 3, 0, (0, 0), "tile4")
-grib2tile.to_image_tile(data, def_tile, 2, 1, (0, 0), "tile4")
-grib2tile.to_image_tile(data, def_tile, 1, 2, (1, 1), "tile4")
+grib2tile.to_image_tile(data, def_tile, 3, 0, (0, 0), "tile5")
+grib2tile.to_image_tile(data, def_tile, 2, 1, (0, 0), "tile5")
+grib2tile.to_image_tile(data, def_tile, 1, 2, (1, 1), "tile5")
 
