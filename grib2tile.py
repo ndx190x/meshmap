@@ -5,7 +5,8 @@ import os
 
 def to_image_tile(data, def_tile, z, thinout, pick, directory):
     directory += "/%d" % (z)
-    os.mkdir(directory)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     print directory
 
     dx = def_tile["nx"] / 2 ** z
