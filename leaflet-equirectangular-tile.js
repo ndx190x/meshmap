@@ -87,7 +87,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 			tileOrigin.lng + tileLon * coords.x
 		);
 
-		return this._map.project(latlon, coords.z).floor().subtract(this._level.origin);
+		return this._map.project(latlon, coords.z).subtract(this._level.origin);
 	},
 	
 	_getTileSizeCoords: function (coords) {
@@ -99,7 +99,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 				ez: coords.ez
 			});
 
-		return se.subtract(nw);
+		return se.subtract(nw).add([1, 1]).ceil(); // add 1px to fill gap in tiles
 	},
 	
 	_setView: function (center, zoom, noPrune, noUpdate) {
@@ -217,7 +217,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 			L.Util.requestAnimFrame(L.bind(this._tileReady, this, coords, null, tile));
 		}
 
-		L.DomUtil.setPosition(tile, tilePos);
+		L.DomUtil.setPosition(tile, tilePos.round());
 
 		// save tile in cache
 		this._tiles[key] = {
