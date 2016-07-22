@@ -160,8 +160,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		for (var j = tileRange.min.y; j <= tileRange.max.y; j++) {
 			for (var i = tileRange.min.x; i <= tileRange.max.x; i++) {
 				var coords = new L.Point(i, j);
-				coords.z = this._tileZoom;
-				coords.ez = this.tileZoom;
+				coords.z = zoom;
+				coords.ez = tileZoom;
 
 				var tile = this._tiles[this._tileCoordsToKey(coords)];
 				if (tile) {
