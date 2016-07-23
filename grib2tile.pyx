@@ -47,11 +47,11 @@ def to_image_tile(np.ndarray[DTYPE_t, ndim=2] data, palette, def_tile, z, thinou
 
 def create_palette(level_values, convert_color):
     palette_colors = [] 
-    level_palette = []
+    level_palette = np.empty(len(level_values), dtype=np.uint8)
 
-    for v in level_values:
+    for i, v in enumerate(level_values):
         index, color = convert_color(v)
-        level_palette.append(index)
+        level_palette[i] = index
         if index >= len(palette_colors):
             palette_colors.append(color)
 
