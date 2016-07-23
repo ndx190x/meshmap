@@ -1,6 +1,10 @@
+# cython: profile=True
+
 import numpy as np
+cimport numpy as np
 from io import BytesIO
 import struct
+
 
 def parse_radar(file):
     fileptr = open(file, 'rb')

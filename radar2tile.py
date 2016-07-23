@@ -3,7 +3,6 @@ import radar
 
 from pprint import pprint
 
-
 def convert_color(v):
     if v == 0:
         return 0, [0, 0, 0] # transparent

@@ -1,7 +1,11 @@
+# cython: profile=True
+
 import numpy as np
+cimport numpy as np
 from PIL import Image, ImagePalette
 import os
 from pprint import pprint
+
 
 def to_image_tile(data, palette, def_tile, z, thinout, pick, directory):
     directory += "/%d" % (z)
