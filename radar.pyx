@@ -1,5 +1,3 @@
-# cython: profile=True
-
 import numpy as np
 cimport numpy as np
 from io import BytesIO
@@ -82,7 +80,6 @@ def parse_7_data(fileptr):
     struct.unpack('>B', fileptr.read(1))
     data = fileptr.read(sec7_length - 5)
     return np.fromstring(data, dtype='>B')
-
 
 def decode_rle_levelvalues(np.ndarray[DTYPE_t, ndim=1] compr_data, int ndata, int nbit, int maxv, np.ndarray[DTYPE_t, ndim=1] level_values):
     #out = np.empty(ndata, dtype='float16')
