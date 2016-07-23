@@ -33,16 +33,19 @@ def_tile = {
     "nlon":    80
 }
 
-file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
-directory = 'tile5'
+def main():
+    file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
+    directory = 'tile5'
 
-radar_data = radar.parse_radar(file)
-#pprint(radar_data)
+    radar_data = radar.parse_radar(file)
+    #pprint(radar_data)
 
-palette, level_palette = grib2tile.create_palette(radar_data['sec5']['level_values'], convert_color)
-data = radar.decode_compr_data(radar_data, level_palette)
+    palette, level_palette = grib2tile.create_palette(radar_data['sec5']['level_values'], convert_color)
+    data = radar.decode_compr_data(radar_data, level_palette)
 
-grib2tile.to_image_tile(data, palette, def_tile, 3, 0, (0, 0), directory)
-grib2tile.to_image_tile(data, palette, def_tile, 2, 1, (0, 0), directory)
-grib2tile.to_image_tile(data, palette, def_tile, 1, 2, (1, 1), directory)
+    grib2tile.to_image_tile(data, palette, def_tile, 3, 0, (0, 0), directory)
+    grib2tile.to_image_tile(data, palette, def_tile, 2, 1, (0, 0), directory)
+    grib2tile.to_image_tile(data, palette, def_tile, 1, 2, (1, 1), directory)
 
+if __name__ == '__main__':
+    main()
