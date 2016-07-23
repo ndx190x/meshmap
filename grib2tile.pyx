@@ -1,30 +1,41 @@
 import numpy as np
+cimport numpy as np
 from PIL import Image, ImagePalette
 import os
 from pprint import pprint
 
-def to_image_tile(data, palette, def_tile, z, thinout, pick, directory):
+DTYPE = np.uint8
+ctypedef np.uint8_t DTYPE_t
+
+def to_image_tile(np.ndarray[DTYPE_t, ndim=2] data, palette, def_tile, z, thinout, pick, directory):
     directory += "/%d" % (z)
     if not os.path.exists(directory):
         os.makedirs(directory)
     print directory
 
-    dx = def_tile["nx"] / 2 ** z
-    dy = def_tile["ny"] / 2 ** z
+    cdef int nx = def_tile["nx"]
+    cdef int ny = def_tile["ny"]
+    cdef int pick_x = pick[0]
+    cdef int pick_y = pick[1]
 
-    t = 2 ** thinout
-    height = dy / t
-    width = dx / t
+    cdef int dx = nx / 2 ** z
+    cdef int dy = ny / 2 ** z
+    cdef int t = 2 ** thinout
+    cdef int height = dy / t
+    cdef int width = dx / t
 
-    for base_y in range(0, def_tile["ny"] - 1, dy):
-        for base_x in range(0, def_tile["nx"] - 1, dx):
-            #print("%d/%d/%d" % (z, base_x / dx, base_y / dy))
-            image_array = np.empty([height, width], dtype='uint8')
-            for y in range (0, height):
-                for x in range (0, width):
-                    X = base_x + t * x + pick[0]
-                    Y = base_y + t * y + pick[1]
-                    image_array[y][x] = data[Y][X];
+    cdef int base_x, base_y, x, y, X, Y
+            
+    cdef np.ndarray[DTYPE_t, ndim=2] image_array
+
+    for base_y in range(0, ny - 1, dy):
+        rows = np.array([base_y + pick_y + t * y for y in range(0, height)], dtype=np.intp)
+        
+        for base_x in range(0, nx - 1, dx):
+            cols = np.array([base_x + pick_x + t * x for x in range(0, width)], dtype=np.intp)
+
+            image_array = data[rows[:, np.newaxis], cols]
+
             save_image_fromarray(
                 image_array,
                 palette,
@@ -34,11 +45,11 @@ def to_image_tile(data, palette, def_tile, z, thinout, pick, directory):
 
 def create_palette(level_values, convert_color):
     palette_colors = [] 
-    level_palette = []
+    level_palette = np.empty(len(level_values), dtype=np.uint8)
 
-    for v in level_values:
+    for i, v in enumerate(level_values):
         index, color = convert_color(v)
-        level_palette.append(index)
+        level_palette[i] = index
         if index >= len(palette_colors):
             palette_colors.append(color)
 

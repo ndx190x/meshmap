@@ -1,6 +1,11 @@
 import numpy as np
+cimport numpy as np
 from io import BytesIO
 import struct
+
+DTYPE = np.uint8
+ctypedef np.uint8_t DTYPE_t
+
 
 def parse_radar(file):
     fileptr = open(file, 'rb')
@@ -76,15 +81,18 @@ def parse_7_data(fileptr):
     data = fileptr.read(sec7_length - 5)
     return np.fromstring(data, dtype='>B')
 
-
-def decode_rle_levelvalues(compr_data, ndata, nbit, maxv, level_values):
+def decode_rle_levelvalues(np.ndarray[DTYPE_t, ndim=1] compr_data, int ndata, int nbit, int maxv, np.ndarray[DTYPE_t, ndim=1] level_values):
     #out = np.empty(ndata, dtype='float16')
-    out = np.empty(ndata, dtype='uint8')
-    lngu = pow(2, nbit) - 1 - maxv
-    pv = -1
-    k = 0
-    count = 1
-    n = 0
+    cdef np.ndarray[DTYPE_t, ndim=1] out = np.empty(ndata, dtype=np.uint8)
+    
+    cdef int lngu = pow(2, nbit) - 1 - maxv
+    cdef int pv = -1
+    cdef int k = 0
+    cdef int count = 1
+    cdef int n = 0
+
+    cdef int v
+
     for v in np.nditer(compr_data):
         if v <= maxv:
             if pv >= 0:
