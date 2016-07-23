@@ -28,16 +28,16 @@ def to_image_tile(np.ndarray[DTYPE_t, ndim=2] data, palette, def_tile, z, thinou
 
     cdef int base_x, base_y, x, y, X, Y
             
-    cdef np.ndarray[DTYPE_t, ndim=2] image_array = np.empty([height, width], dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=2] image_array
 
     for base_y in range(0, ny - 1, dy):
+        rows = np.array([base_y + pick_y + t * y for y in range(0, height)], dtype=np.intp)
+        
         for base_x in range(0, nx - 1, dx):
-            #print("%d/%d/%d" % (z, base_x / dx, base_y / dy))
-            for y in range (0, height):
-                for x in range (0, width):
-                    X = base_x + t * x + pick_x
-                    Y = base_y + t * y + pick_y
-                    image_array[y][x] = data[Y][X];
+            cols = np.array([base_x + pick_x + t * x for x in range(0, width)], dtype=np.intp)
+
+            image_array = data[rows[:, np.newaxis], cols]
+
             save_image_fromarray(
                 image_array,
                 palette,
