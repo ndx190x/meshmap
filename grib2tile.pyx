@@ -9,7 +9,7 @@ from pprint import pprint
 DTYPE = np.uint8
 ctypedef np.uint8_t DTYPE_t
 
-def to_image_tile(np.ndarray data, palette, def_tile, z, thinout, pick, directory):
+def to_image_tile(np.ndarray[DTYPE_t, ndim=2] data, palette, def_tile, z, thinout, pick, directory):
     directory += "/%d" % (z)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -28,7 +28,7 @@ def to_image_tile(np.ndarray data, palette, def_tile, z, thinout, pick, director
 
     cdef int base_x, base_y, x, y, X, Y
             
-    cdef np.ndarray image_array = np.empty([height, width], dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=2] image_array = np.empty([height, width], dtype=DTYPE)
 
     for base_y in range(0, ny - 1, dy):
         for base_x in range(0, nx - 1, dx):
