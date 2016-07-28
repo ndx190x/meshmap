@@ -34,8 +34,8 @@ def_tile = {
 }
 
 def main():
-    file = 'radar/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
-    directory = 'tile5'
+    file = 'radar/data/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
+    directory = 'radar/tiles'
 
     radar_data = radar.parse_radar(file)
     #pprint(radar_data)
