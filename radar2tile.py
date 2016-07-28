@@ -1,6 +1,7 @@
 import grib2tile
 import radar
 
+import sys
 from pprint import pprint
 
 def convert_color(v):
@@ -33,8 +34,8 @@ def_tile = {
     "nlon":    80
 }
 
-def main():
-    file = 'radar/data/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
+def main(file):
+    #file = 'radar/data/Z__C_RJTD_20160306190000_RDR_JMAGPV_Ggis1km_Prr10lv_ANAL_grib2.bin'
     directory = 'radar/tiles'
 
     radar_data = radar.parse_radar(file)
@@ -48,4 +49,4 @@ def main():
     grib2tile.to_image_tile(data, palette, def_tile, 1, 2, (1, 1), directory)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
