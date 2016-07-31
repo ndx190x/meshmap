@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.css" />
+	<style>
+		body { margin:0; padding:0; }
+		#map { position:absolute; top:0; bottom:0; width:100%;  }
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.js"></script>
+	<script src="http://maps.google.com/maps/api/js?v=3&key=AIzaSyDXukA2WmcgYQKPMC9D9E68n1WjQoVEhXE"></script>
+	<script src="../lib/Google.js"></script>
+	<script src="../leaflet-equirectangular-tile.js"></script>
+	<script>
+		var map = new L.Map('map', {center: new L.LatLng(37.892, 137.571), zoom: 6});
+		map.addLayer(new L.Google("ROADMAP"));
+
+		var radar = new L.EquirectangularTile();
+		radar.addTo(map);
+
+		for (var i = 0; i < 420; i++){
+			var lat = 34 - i * 28 / 3360;
+			L.polyline([[lat, 130], [lat, 140]], {weight: 1}).addTo(map);
+		}
+
+	</script>
+</body>
+</html>
