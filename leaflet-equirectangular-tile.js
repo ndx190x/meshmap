@@ -32,6 +32,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		options = L.setOptions(this, options);
 
+		// tile bounds lat / lon
+		this._tileBoundsLat = options.bounds.getNorth() - options.bounds.getSouth();
+		this._tileBoundsLon = options.bounds.getEast() - options.bounds.getWest();
+
 		// fix image-rendering does not work with css 3d
 		if (L.Browser.chrome || (L.Browser.safari && !L.Browser.mobile)) {
 			this._disable3DImageRendering = true;
@@ -43,7 +47,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 			this.on('tileunload', this._onTileRemove);
 		}
 	},
-
 
 	getTileUrl: function (coords) {
 		return "tiles/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
@@ -57,8 +60,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest();
 
-		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / Math.pow(2, tileZoom),
-			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / Math.pow(2, tileZoom);
+		var tileLat = this._tileBoundsLat / Math.pow(2, tileZoom),
+			tileLon = this._tileBoundsLon / Math.pow(2, tileZoom);
 
 		var N = Math.floor((tileOrigin.lat - mapBounds.getNorth()) / tileLat),
 			W = Math.floor((mapBounds.getWest() - tileOrigin.lng) / tileLon),
@@ -79,8 +82,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest(),
 			zoom = coords.ez,
-			tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / Math.pow(2, zoom),
-			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / Math.pow(2, zoom);
+			tileLat = this._tileBoundsLat / Math.pow(2, zoom),
+			tileLon = this._tileBoundsLon / Math.pow(2, zoom);
 
 		var latlon = new L.latLng(
 			tileOrigin.lat - tileLat * coords.y,
