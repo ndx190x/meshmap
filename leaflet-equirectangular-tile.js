@@ -14,15 +14,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 	options: {
 		bounds: new L.latLngBounds([20.0, 118.0], [48.0, 150.0]),
-		tileZoom: function (mapZoom) {  // TODO: fractal zoom, auto fit?
-			if (mapZoom <= 4){
-				return 1;
-			}else if (mapZoom >= 6){
-				return 3;
-			}else{
-				return 2;
-			}
-		},
+		tileZoom: [1, 2, 3],
+		tileSize: new L.Point(420, 320),
 		opacity: 0.7
 	},
 
@@ -55,8 +48,30 @@ L.EquirectangularTile = L.TileLayer.extend({
 		});
 	},
 
-	// override GridLayer Methods
-	// _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
+
+	/* 
+	 * override GridLayer Methods
+	 *
+	 * _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
+	 *
+	 */
+
+	// calculate tileZoom from comparing lat/pixel
+	_getTileZoom: function (mapZoom) {
+		var mapLatPixel = L.Projection.SphericalMercator.MAX_LATITUDE * 2 / Math.pow(2, mapZoom) / 256;
+
+		for (var z in this.options.tileZoom) {
+			var tileZoom = this.options.tileZoom[z];
+			var tileLatPixel = this._tileBoundsLat / Math.pow(2, tileZoom) / this.options.tileSize.x;
+		
+			if (tileLatPixel < mapLatPixel) {
+				return tileZoom;
+			}
+		}
+		
+		return tileZoom;
+	},
+
 
 	// map latlonbounds -> coords bounds
 	_getTileRange: function (mapBounds, tileZoom) {
@@ -115,7 +130,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (!noUpdate || tileZoomChanged) {
 
 			this._tileZoom = tileZoom;
-			this.tileZoom = this.options.tileZoom(tileZoom);
+			this.tileZoom = this._getTileZoom(tileZoom);
 
 			if (this._abortLoading) {
 				this._abortLoading();
@@ -149,7 +164,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (center === undefined) { center = map.getCenter(); }
 		if (this._tileZoom === undefined) { return; }	// if out of minzoom/maxzoom
 
-		var tileZoom = this.options.tileZoom(zoom),
+		var tileZoom = this._getTileZoom(zoom),
 			tileRange = this._getTileRange(map.getBounds(), tileZoom),
 		    tileCenter = tileRange.getCenter(),
 		    queue = [];
