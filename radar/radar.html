@@ -24,7 +24,7 @@
 		//  attribution: "<a href='http://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
 		//}).addTo(map);
 
-		var radar = new L.EquirectangularTile();
+		var radar = new L.EquirectangularTile("tiles/{z}/{x}_{y}.png");
 		radar.addTo(map);
 	</script>
 </body>

@@ -29,7 +29,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 	initialize: function (url, options) {
 
 		this._url = url;
-
 		options = L.setOptions(this, options);
 
 		// tile bounds lat / lon
@@ -49,7 +48,11 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 
 	getTileUrl: function (coords) {
-		return "tiles/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
+		return L.Util.template(this._url, {
+			x: coords.x,
+			y: coords.y,
+			z: coords.ez	
+		});
 	},
 
 	// override GridLayer Methods

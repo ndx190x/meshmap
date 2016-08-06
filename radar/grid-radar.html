@@ -20,7 +20,7 @@
 		var map = new L.Map('map', {center: new L.LatLng(37.892, 137.571), zoom: 6});
 		map.addLayer(new L.Google("ROADMAP"));
 
-		var radar = new L.EquirectangularTile();
+		var radar = new L.EquirectangularTile("tiles/{z}/{x}_{y}.png");
 		radar.addTo(map);
 
 		for (var i = 0; i < 420; i++){
