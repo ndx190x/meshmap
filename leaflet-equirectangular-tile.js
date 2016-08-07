@@ -340,23 +340,17 @@ L.EquirectangularTile = L.TileLayer.extend({
 				zoom = coords.ez,
 				tileLat = map._tileBoundsLat / Math.pow(2, zoom),
 				lat = tileOrigin.lat - tileLat * coords.y,
-				py = map._map.project([lat, 0], coords.z).round().y,
+				py = map._map.project([lat, 0], coords.z).y,
 				base_y = py;
 		
-			console.log(coords);
-			console.log([tile.width, tile.height]);
-
 			for (var i = 0; i < sh; i++){
 				var l = lat - (i + 1) * tileLat / sh;
-				var y = map._map.project([l, 0], coords.z).round().y;
+				var y = map._map.project([l, 0], coords.z).y;
 				var dy = y - base_y;
 				var dh = y - py;
-
-				//console.log([dy, dh]);
+				py = y;
 
 				ctx.drawImage(img, 0, i, sw, 1, 0, dy, tile.width, dh);
-
-				py = y;
 			}
 			done(null, tile);
 		};
