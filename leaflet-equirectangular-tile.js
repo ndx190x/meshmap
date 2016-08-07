@@ -42,9 +42,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 	getTileUrl: function (coords) {
 		return L.Util.template(this._url, {
-			x: coords.x,
-			y: coords.y,
-			z: coords.ez	
+			x: coords.ix,
+			y: coords.iy,
+			z: coords.iz	
 		});
 	},
 
@@ -58,18 +58,22 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 	// calculate tileZoom from comparing lat/pixel
 	_getTileZoom: function (mapZoom) {
-		var mapLatPixel = L.Projection.SphericalMercator.MAX_LATITUDE * 2 / Math.pow(2, mapZoom) / 256;
+		var sLatPx = 2 * L.Projection.SphericalMercator.MAX_LATITUDE / 256;
+		var eLatPx = this._tileBoundsLat / this.options.tileSize.x;
+		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2);
 
+		return Math.max(0, Math.ceil(scale));
+	},
+
+	_getTileImageZoom: function (tileZoom) {
 		for (var z in this.options.tileZoom) {
-			var tileZoom = this.options.tileZoom[z];
-			var tileLatPixel = this._tileBoundsLat / Math.pow(2, tileZoom) / this.options.tileSize.x;
+			var tileImageZoom = this.options.tileZoom[z];
 		
-			if (tileLatPixel < mapLatPixel) {
-				return tileZoom;
+			if (tileImageZoom >= tileZoom) {
+				return tileImageZoom;
 			}
 		}
-		
-		return tileZoom;
+		return tileImageZoom;
 	},
 
 
@@ -165,6 +169,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (this._tileZoom === undefined) { return; }	// if out of minzoom/maxzoom
 
 		var tileZoom = this._getTileZoom(zoom),
+			tileImageZoom = this._getTileImageZoom(tileZoom),
+			tileImageScale = Math.pow(2, tileZoom - tileImageZoom),
 			tileRange = this._getTileRange(map.getBounds(), tileZoom),
 		    tileCenter = tileRange.getCenter(),
 		    queue = [];
@@ -183,6 +189,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 				var coords = new L.Point(i, j);
 				coords.z = zoom;
 				coords.ez = tileZoom;
+				coords.iz = tileImageZoom;
+				coords.ix = Math.floor(i / tileImageScale);
+				coords.iy = Math.floor(j / tileImageScale);
 
 				var tile = this._tiles[this._tileCoordsToKey(coords)];
 				if (tile) {
@@ -342,7 +351,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 				lat = tileOrigin.lat - tileLat * coords.y,
 				py = map._map.project([lat, 0], coords.z).y,
 				base_y = py;
-		
+
 			for (var i = 0; i < sh; i++){
 				var l = lat - (i + 1) * tileLat / sh;
 				var y = map._map.project([l, 0], coords.z).y;
