@@ -257,6 +257,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	createTile: function (coords, done) {
+			
+		return this.createCanvasTileOverscaled(coords, done);
+
 		if (L.Browser.edge){
 			return this.createCanvasTile(coords, done);
 		}else{
@@ -304,6 +307,57 @@ L.EquirectangularTile = L.TileLayer.extend({
 		img.src = this.getTileUrl(coords);
 		img.onload = function () {
 			ctx.drawImage(img, 0, 0);
+			done(null, tile);
+		};
+
+		return tile;
+	},
+	
+	createCanvasTileOverscaled: function (coords, done) {
+		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
+
+		var tileSize = this._getTileSizeCoords(coords);
+		tile.width = tileSize.x;
+		tile.height = tileSize.y;
+
+		var sw = 320,
+			sh = 420;
+
+		var ctx = tile.getContext('2d');
+		var map = this;
+
+		// pixcelated scaling
+		ctx.mozImageSmoothingEnabled = false;
+		ctx.webkitImageSmoothingEnabled = false;
+		ctx.msImageSmoothingEnabled = false;
+		ctx.imageSmoothingEnabled = false;
+
+		var img = new Image();
+		img.src = this.getTileUrl(coords);
+		img.onload = function () {
+			var tileBounds = map.options.bounds,
+				tileOrigin = tileBounds.getNorthWest(),
+				zoom = coords.ez,
+				tileLat = map._tileBoundsLat / Math.pow(2, zoom),
+				lat = tileOrigin.lat - tileLat * coords.y,
+				py = map._map.project([lat, 0], coords.z).round().y,
+				base_y = py;
+		
+			console.log(coords);
+			console.log([tile.width, tile.height]);
+
+			for (var i = 0; i < sh; i++){
+				var l = lat - (i + 1) * tileLat / sh;
+				var y = map._map.project([l, 0], coords.z).round().y;
+				var dy = y - base_y;
+				var dh = y - py;
+
+				//console.log([dy, dh]);
+
+				ctx.drawImage(img, 0, i, sw, 1, 0, dy, tile.width, dh);
+
+				py = y;
+			}
 			done(null, tile);
 		};
 
