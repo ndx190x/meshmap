@@ -392,7 +392,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 				dpy = y;
 
 				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
-				ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
+				if (sw2 > 0) ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
 				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
 			}
 			done(null, tile);
