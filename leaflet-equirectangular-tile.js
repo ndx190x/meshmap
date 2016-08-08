@@ -14,29 +14,19 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 	options: {
 		bounds: new L.latLngBounds([20.0, 118.0], [48.0, 150.0]),
-		tileZoom: function (mapZoom) {  // TODO: fractal zoom, auto fit?
-			if (mapZoom <= 4){
-				return 1;
-			}else if (mapZoom >= 6){
-				return 3;
-			}else{
-				return 2;
-			}
-		},
+		tileZoom: [1, 2, 3],
+		tileSize: new L.Point(320, 420),
 		opacity: 0.7
 	},
 
 	initialize: function (url, options) {
 
 		this._url = url;
-
 		options = L.setOptions(this, options);
 
-		// fix image-rendering does not work with css 3d
-		if (L.Browser.chrome || (L.Browser.safari && !L.Browser.mobile)) {
-			this._disable3DImageRendering = true;
-			L.Browser.ie3d = true; // hack: use tranaslate
-		}
+		// tile bounds lat / lon
+		this._tileBoundsLat = options.bounds.getNorth() - options.bounds.getSouth();
+		this._tileBoundsLon = options.bounds.getEast() - options.bounds.getWest();
 
 		// for https://github.com/Leaflet/Leaflet/issues/137
 		if (!L.Browser.android) {
@@ -44,21 +34,50 @@ L.EquirectangularTile = L.TileLayer.extend({
 		}
 	},
 
-
 	getTileUrl: function (coords) {
-		return "tiles/" + coords.ez + "/" + coords.x + "_" + coords.y + ".png";
+		return L.Util.template(this._url, {
+			x: coords.ix,
+			y: coords.iy,
+			z: coords.iz	
+		});
 	},
 
-	// override GridLayer Methods
-	// _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
+
+	/* 
+	 * override GridLayer Methods
+	 *
+	 * _tileCoordsToBounds, _keyToBounds, _globalTileRange are invalid in this class
+	 *
+	 */
+
+	// calculate tileZoom from comparing lat/pixel
+	_getTileZoom: function (mapZoom) {
+		var sLatPx = 2 * L.Projection.SphericalMercator.MAX_LATITUDE / 256;
+		var eLatPx = this._tileBoundsLat / this.options.tileSize.x;
+		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2);
+
+		return Math.max(0, Math.ceil(scale));
+	},
+
+	_getTileImageZoom: function (tileZoom) {
+		for (var z in this.options.tileZoom) {
+			var tileImageZoom = this.options.tileZoom[z];
+		
+			if (tileImageZoom >= tileZoom) {
+				return tileImageZoom;
+			}
+		}
+		return tileImageZoom;
+	},
+
 
 	// map latlonbounds -> coords bounds
 	_getTileRange: function (mapBounds, tileZoom) {
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest();
 
-		var tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / Math.pow(2, tileZoom),
-			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / Math.pow(2, tileZoom);
+		var tileLat = this._tileBoundsLat / Math.pow(2, tileZoom),
+			tileLon = this._tileBoundsLon / Math.pow(2, tileZoom);
 
 		var N = Math.floor((tileOrigin.lat - mapBounds.getNorth()) / tileLat),
 			W = Math.floor((mapBounds.getWest() - tileOrigin.lng) / tileLon),
@@ -75,18 +94,21 @@ L.EquirectangularTile = L.TileLayer.extend({
 		return true;
 	},
 	
-	_getTilePos: function (coords) {
+	_getTileLatLng: function (coords) {
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest(),
 			zoom = coords.ez,
-			tileLat = (tileBounds.getNorth() - tileBounds.getSouth()) / Math.pow(2, zoom),
-			tileLon = (tileBounds.getEast() - tileBounds.getWest()) / Math.pow(2, zoom);
+			tileLat = this._tileBoundsLat / Math.pow(2, zoom),
+			tileLon = this._tileBoundsLon / Math.pow(2, zoom);
 
-		var latlon = new L.latLng(
+		return new L.latLng(
 			tileOrigin.lat - tileLat * coords.y,
 			tileOrigin.lng + tileLon * coords.x
 		);
-
+	},
+	
+	_getTilePos: function (coords) {
+		var latlon = this._getTileLatLng(coords);
 		return this._map.project(latlon, coords.z).round().subtract(this._level.origin);
 	},
 	
@@ -109,7 +131,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (!noUpdate || tileZoomChanged) {
 
 			this._tileZoom = tileZoom;
-			this.tileZoom = this.options.tileZoom(tileZoom);
+			this.tileZoom = this._getTileZoom(tileZoom);
 
 			if (this._abortLoading) {
 				this._abortLoading();
@@ -143,7 +165,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 		if (center === undefined) { center = map.getCenter(); }
 		if (this._tileZoom === undefined) { return; }	// if out of minzoom/maxzoom
 
-		var tileZoom = this.options.tileZoom(zoom),
+		var tileZoom = this._getTileZoom(zoom),
+			tileImageZoom = this._getTileImageZoom(tileZoom),
+			tileImageScale = Math.pow(2, tileZoom - tileImageZoom),
 			tileRange = this._getTileRange(map.getBounds(), tileZoom),
 		    tileCenter = tileRange.getCenter(),
 		    queue = [];
@@ -162,6 +186,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 				var coords = new L.Point(i, j);
 				coords.z = zoom;
 				coords.ez = tileZoom;
+				coords.iz = tileImageZoom;
+				coords.ix = Math.floor(i / tileImageScale);
+				coords.iy = Math.floor(j / tileImageScale);
 
 				var tile = this._tiles[this._tileCoordsToKey(coords)];
 				if (tile) {
@@ -236,8 +263,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	createTile: function (coords, done) {
-		if (L.Browser.edge){
-			return this.createCanvasTile(coords, done);
+		if (coords.ez > coords.iz){
+			return this.createCanvasTileOverscaled(coords, done);
+
 		}else{
 			return this.createImageTile(coords, done);
 		}
@@ -258,20 +286,21 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.style.imageRendering = '-moz-crisp-edges';
 		tile.style.imageRendering = 'pixelated';
 
-		if (this._disable3DImageRendering) {
-			tile.style.willChange = 'initial';
-		}
-
 		return tile;
 	},
 	
-	createCanvasTile: function (coords, done) {
+	createCanvasTileOverscaled: function (coords, done) {
 		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
 
-		tile.width = 320;
-		tile.height = 420;
+		var tileSize = this._getTileSizeCoords(coords);
+		tile.width = tileSize.x;
+		tile.height = tileSize.y;
+
+		var sw = this.options.tileSize.x,
+			sh = this.options.tileSize.y;
 
 		var ctx = tile.getContext('2d');
+		var map = this;
 
 		// pixcelated scaling
 		ctx.mozImageSmoothingEnabled = false;
@@ -282,7 +311,56 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var img = new Image();
 		img.src = this.getTileUrl(coords);
 		img.onload = function () {
-			ctx.drawImage(img, 0, 0);
+			var tileLat = map._tileBoundsLat / Math.pow(2, coords.ez),
+				tileLon = map._tileBoundsLon / Math.pow(2, coords.ez),
+				tilePos = map._getTileLatLng(coords);
+
+			var sTileLat = map._tileBoundsLat / Math.pow(2, coords.iz),
+				sTileLon = map._tileBoundsLon / Math.pow(2, coords.iz),
+				sTilePos = map._getTileLatLng({x: coords.ix, y: coords.iy, ez: coords.iz});
+
+			var sp1 = new L.Point(
+				Math.floor((tilePos.lng - sTilePos.lng) / (sTileLon / sw)),
+				Math.floor((sTilePos.lat - tilePos.lat) / (sTileLat / sh))
+			);
+			var sp2 = new L.Point(
+				Math.ceil(((tilePos.lng + tileLon) - sTilePos.lng) / (sTileLon / sw)),
+				Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
+			);
+
+			var dpbase = map._map.project(tilePos, coords.z).round(),
+				dpbase2x = dpbase.x + tile.width,
+				dpbase2y = dpbase.y + tile.height,
+				dpy = dpbase.y,
+				lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
+				lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
+				dp3x = map._map.project([0, lon3], coords.z).round().x,
+				dp4x = map._map.project([0, lon4], coords.z).round().x;
+
+			var sx1 = sp1.x,
+				sx2 = sp1.x + 1,
+				sx3 = sp2.x - 1,
+				sw2 = (sp2.x - 1) - (sp1.x + 1),
+				dx2 = dp3x - dpbase.x,
+				dx3 = dp4x - dpbase.x,
+				dw1 = dp3x - dpbase.x,
+				dw2 = dp4x - dp3x,
+				dw3 = dpbase2x - dp4x;
+
+			var check_p1 = (dp3x != dpbase.x),
+				check_p2 = (dp4x != dpbase2x);
+
+			for (var sy = sp1.y; sy < sp2.y; sy++){
+				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
+				var y = Math.min(map._map.project([l, 0], coords.z).round().y, dpbase2y);
+				var dy = dpy - dpbase.y;
+				var dh = y - dpy
+				dpy = y;
+
+				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
+				if (sw2 > 0) ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
+				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
+			}
 			done(null, tile);
 		};
 
