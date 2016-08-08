@@ -15,7 +15,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	options: {
 		bounds: new L.latLngBounds([20.0, 118.0], [48.0, 150.0]),
 		tileZoom: [1, 2, 3],
-		tileSize: new L.Point(420, 320),
+		tileSize: new L.Point(320, 420),
 		opacity: 0.7
 	},
 
@@ -269,11 +269,9 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 	
 	createTile: function (coords, done) {
-			
-		return this.createCanvasTileOverscaled(coords, done);
+		if (coords.ez > coords.iz){
+			return this.createCanvasTileOverscaled(coords, done);
 
-		if (L.Browser.edge){
-			return this.createCanvasTile(coords, done);
 		}else{
 			return this.createImageTile(coords, done);
 		}
@@ -332,8 +330,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.width = tileSize.x;
 		tile.height = tileSize.y;
 
-		var sw = 320,
-			sh = 420;
+		var sw = this.options.tileSize.x,
+			sh = this.options.tileSize.y;
 
 		var ctx = tile.getContext('2d');
 		var map = this;
