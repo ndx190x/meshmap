@@ -28,12 +28,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		this._tileBoundsLat = options.bounds.getNorth() - options.bounds.getSouth();
 		this._tileBoundsLon = options.bounds.getEast() - options.bounds.getWest();
 
-		// fix image-rendering does not work with css 3d
-		if (L.Browser.chrome || (L.Browser.safari && !L.Browser.mobile)) {
-			this._disable3DImageRendering = true;
-			L.Browser.ie3d = true; // hack: use tranaslate
-		}
-
 		// for https://github.com/Leaflet/Leaflet/issues/137
 		if (!L.Browser.android) {
 			this.on('tileunload', this._onTileRemove);
@@ -291,34 +285,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.style.imageRendering = '-webkit-crisp-edges';
 		tile.style.imageRendering = '-moz-crisp-edges';
 		tile.style.imageRendering = 'pixelated';
-
-		if (this._disable3DImageRendering) {
-			tile.style.willChange = 'initial';
-		}
-
-		return tile;
-	},
-	
-	createCanvasTile: function (coords, done) {
-		var tile = L.DomUtil.create('canvas', 'leaflet-tile');
-
-		tile.width = 320;
-		tile.height = 420;
-
-		var ctx = tile.getContext('2d');
-
-		// pixcelated scaling
-		ctx.mozImageSmoothingEnabled = false;
-		ctx.webkitImageSmoothingEnabled = false;
-		ctx.msImageSmoothingEnabled = false;
-		ctx.imageSmoothingEnabled = false;
-
-		var img = new Image();
-		img.src = this.getTileUrl(coords);
-		img.onload = function () {
-			ctx.drawImage(img, 0, 0);
-			done(null, tile);
-		};
 
 		return tile;
 	},
