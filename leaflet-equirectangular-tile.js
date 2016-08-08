@@ -364,14 +364,14 @@ L.EquirectangularTile = L.TileLayer.extend({
 				Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
 			);
 
-			var dpbase = map._map.project(tilePos, coords.z),
+			var dpbase = map._map.project(tilePos, coords.z).round(),
 				dpbase2x = dpbase.x + tile.width,
 				dpbase2y = dpbase.y + tile.height,
 				dpy = dpbase.y,
 				lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
 				lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
-				dp3x = map._map.project([0, lon3], coords.z).x,
-				dp4x = map._map.project([0, lon4], coords.z).x;
+				dp3x = map._map.project([0, lon3], coords.z).round().x,
+				dp4x = map._map.project([0, lon4], coords.z).round().x;
 
 			var sx1 = sp1.x,
 				sx2 = sp1.x + 1,
@@ -383,16 +383,12 @@ L.EquirectangularTile = L.TileLayer.extend({
 				dw2 = dp4x - dp3x,
 				dw3 = dpbase2x - dp4x;
 
-			var lon1 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
-				lon2 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
-				check_p1 = (lon1 != tilePos.lng),
-				check_p2 = (lon2 != tilePos.lng + tileLon);
+			var check_p1 = (dp3x != dpbase.x),
+				check_p2 = (dp4x != dpbase2x);
 
-				var l1 = sTilePos.lat - (sp2.y) * (sTileLat / sh);
-				console.log([coords.y, map._map.project([l1, 0], coords.z).y, dpbase2y]);
 			for (var sy = sp1.y; sy < sp2.y; sy++){
 				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
-				var y = Math.min(map._map.project([l, 0], coords.z).y, dpbase2y);
+				var y = Math.min(map._map.project([l, 0], coords.z).round().y, dpbase2y);
 				var dy = dpy - dpbase.y;
 				var dh = y - dpy
 				dpy = y;
