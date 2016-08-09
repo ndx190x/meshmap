@@ -3,7 +3,7 @@
  * @inherits TileLayer
  * @author Yuta Tachibana
  *
- * for leaflet v1.0.0-rc1
+ * for leaflet v1.0.0-rc3
  *
  * fit equirectangular projection tiles to web mercator (spherical mercator)
  *
@@ -126,7 +126,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	
 	_setView: function (center, zoom, noPrune, noUpdate) {
 		var tileZoom = Math.round(zoom);
-		var tileZoomChanged = (tileZoom !== this._tileZoom);
+		var tileZoomChanged = this.options.updateWhenZooming && (tileZoom !== this._tileZoom);
 
 		if (!noUpdate || tileZoomChanged) {
 
