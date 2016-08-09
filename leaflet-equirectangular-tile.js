@@ -54,8 +54,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 	_getTileZoom: function (mapZoom) {
 		var sLatPx = 2 * L.Projection.SphericalMercator.MAX_LATITUDE / 256;
 		var eLatPx = this._tileBoundsLat / this.options.tileSize.x;
-		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2);
-
+		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2) - 1;
+		
 		return Math.max(0, Math.ceil(scale));
 	},
 
