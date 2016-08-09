@@ -231,11 +231,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tile = this.createTile(coords, L.bind(this._tileReady, this, coords));
 
 		this._initTile(tile);
-		
-		// reset tile width, height
-		var tileSize = this._getTileSizeCoords(coords);
-		tile.style.width = tileSize.x + 'px';
-		tile.style.height = tileSize.y + 'px';
 
 		// if createTile is defined with a second argument ("done" callback),
 		// we know that tile is async and will be ready later; otherwise
@@ -262,6 +257,24 @@ L.EquirectangularTile = L.TileLayer.extend({
 		});
 	},
 	
+	_initTile: function (tile) {
+		L.DomUtil.addClass(tile, 'leaflet-tile');
+
+		tile.onselectstart = L.Util.falseFn;
+		tile.onmousemove = L.Util.falseFn;
+
+		// update opacity on tiles in IE7-8 because of filter inheritance problems
+		if (L.Browser.ielt9 && this.options.opacity < 1) {
+			L.DomUtil.setOpacity(tile, this.options.opacity);
+		}
+
+		// without this hack, tiles disappear after zoom on Chrome for Android
+		// https://github.com/Leaflet/Leaflet/issues/2078
+		if (L.Browser.android && !L.Browser.android23) {
+			tile.style.WebkitBackfaceVisibility = 'hidden';
+		}
+	},
+	
 	createTile: function (coords, done) {
 		if (coords.ez > coords.iz){
 			return this.createCanvasTileOverscaled(coords, done);
@@ -276,6 +289,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		L.DomEvent.on(tile, 'load', L.bind(this._tileOnLoad, this, done, tile));
 		L.DomEvent.on(tile, 'error', L.bind(this._tileOnError, this, done, tile));
+		
+		var tileSize = this._getTileSizeCoords(coords);
+		tile.style.width = tileSize.x + 'px';
+		tile.style.height = tileSize.y + 'px';
 
 		tile.alt = '';
 		tile.src = this.getTileUrl(coords);
