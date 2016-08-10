@@ -376,16 +376,37 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var check_p1 = (dp3x != dpbase.x),
 			check_p2 = (dp4x != dpbase2x);
 
-		for (var sy = sp1.y; sy < sp2.y; sy++){
-			var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
-			var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
-			var dy = dpy - dpbase.y;
-			var dh = y - dpy
-			dpy = y;
+		if (sp2.y - sp1.y < 10){
+			for (var sy = sp1.y; sy < sp2.y; sy++){
+				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
+				var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
+				var dy = dpy - dpbase.y;
+				var dh = y - dpy
+				dpy = y;
 
-			if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
-			if (sw2 > 0)  ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
-			if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
+				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
+				if (sw2 > 0)  ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
+				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
+			}
+
+		}else{
+			var list = [sp1.y, sp1.y + 1, sp2.y - 1, sp2.y];
+
+			for (var i = 0; i < 3; i++){
+				var sy1 = list[i], sy2 = list[i+1];
+				var dsy = sy2 - sy1;
+				if (dsy <= 0) continue;
+
+				var l = sTilePos.lat - sy2 * (sTileLat / sh);
+				var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
+				var dy = dpy - dpbase.y;
+				var dh = y - dpy
+				dpy = y;
+				
+				if (check_p1) ctx.drawImage(img, sx1, sy1,   1, dsy,   0, dy, dw1, dh);
+				if (sw2 > 0)  ctx.drawImage(img, sx2, sy1, sw2, dsy, dx2, dy, dw2, dh);
+				if (check_p2) ctx.drawImage(img, sx3, sy1,   1, dsy, dx3, dy, dw3, dh);
+			}
 		}
 
 		return;
