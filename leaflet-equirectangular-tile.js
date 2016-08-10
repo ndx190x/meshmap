@@ -313,9 +313,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.width = tileSize.x;
 		tile.height = tileSize.y;
 
-		var sw = this.options.tileSize.x,
-			sh = this.options.tileSize.y;
-
 		var ctx = tile.getContext('2d');
 		var map = this;
 
@@ -328,61 +325,72 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var img = new Image();
 		img.src = this.getTileUrl(coords);
 		img.onload = function () {
-			var tileLat = map._tileBoundsLat / Math.pow(2, coords.ez),
-				tileLon = map._tileBoundsLon / Math.pow(2, coords.ez),
-				tilePos = map._getTileLatLng(coords);
-
-			var sTileLat = map._tileBoundsLat / Math.pow(2, coords.iz),
-				sTileLon = map._tileBoundsLon / Math.pow(2, coords.iz),
-				sTilePos = map._getTileLatLng({x: coords.ix, y: coords.iy, ez: coords.iz});
-
-			var sp1 = new L.Point(
-				Math.floor((tilePos.lng - sTilePos.lng) / (sTileLon / sw)),
-				Math.floor((sTilePos.lat - tilePos.lat) / (sTileLat / sh))
-			);
-			var sp2 = new L.Point(
-				Math.ceil(((tilePos.lng + tileLon) - sTilePos.lng) / (sTileLon / sw)),
-				Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
-			);
-
-			var dpbase = map._map.project(tilePos, coords.z).round(),
-				dpbase2x = dpbase.x + tile.width,
-				dpbase2y = dpbase.y + tile.height,
-				dpy = dpbase.y,
-				lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
-				lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
-				dp3x = map._map.project([0, lon3], coords.z).round().x,
-				dp4x = map._map.project([0, lon4], coords.z).round().x;
-
-			var sx1 = sp1.x,
-				sx2 = sp1.x + 1,
-				sx3 = sp2.x - 1,
-				sw2 = (sp2.x - 1) - (sp1.x + 1),
-				dx2 = dp3x - dpbase.x,
-				dx3 = dp4x - dpbase.x,
-				dw1 = dp3x - dpbase.x,
-				dw2 = dp4x - dp3x,
-				dw3 = dpbase2x - dp4x;
-
-			var check_p1 = (dp3x != dpbase.x),
-				check_p2 = (dp4x != dpbase2x);
-
-			for (var sy = sp1.y; sy < sp2.y; sy++){
-				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
-				var y = Math.min(map._map.project([l, 0], coords.z).round().y, dpbase2y);
-				var dy = dpy - dpbase.y;
-				var dh = y - dpy
-				dpy = y;
-
-				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
-				if (sw2 > 0) ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
-				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
-			}
+			var r = map._drawCanvasTile(img, coords, ctx, tile);
 			done(null, tile);
 		};
 
 		return tile;
 	},
+
+
+	_drawCanvasTile: function (img, coords, ctx, tile) {
+		var sw = this.options.tileSize.x,
+			sh = this.options.tileSize.y;
+
+		var tileLat = this._tileBoundsLat / Math.pow(2, coords.ez),
+			tileLon = this._tileBoundsLon / Math.pow(2, coords.ez),
+			tilePos = this._getTileLatLng(coords);
+
+		var sTileLat = this._tileBoundsLat / Math.pow(2, coords.iz),
+			sTileLon = this._tileBoundsLon / Math.pow(2, coords.iz),
+			sTilePos = this._getTileLatLng({x: coords.ix, y: coords.iy, ez: coords.iz});
+
+		var sp1 = new L.Point(
+			Math.floor((tilePos.lng - sTilePos.lng) / (sTileLon / sw)),
+			Math.floor((sTilePos.lat - tilePos.lat) / (sTileLat / sh))
+		);
+		var sp2 = new L.Point(
+			Math.ceil(((tilePos.lng + tileLon) - sTilePos.lng) / (sTileLon / sw)),
+			Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
+		);
+
+		var dpbase = this._map.project(tilePos, coords.z).round(),
+			dpbase2x = dpbase.x + tile.width,
+			dpbase2y = dpbase.y + tile.height,
+			dpy = dpbase.y,
+			lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
+			lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
+			dp3x = this._map.project([0, lon3], coords.z).round().x,
+			dp4x = this._map.project([0, lon4], coords.z).round().x;
+
+		var sx1 = sp1.x,
+			sx2 = sp1.x + 1,
+			sx3 = sp2.x - 1,
+			sw2 = (sp2.x - 1) - (sp1.x + 1),
+			dx2 = dp3x - dpbase.x,
+			dx3 = dp4x - dpbase.x,
+			dw1 = dp3x - dpbase.x,
+			dw2 = dp4x - dp3x,
+			dw3 = dpbase2x - dp4x;
+
+		var check_p1 = (dp3x != dpbase.x),
+			check_p2 = (dp4x != dpbase2x);
+
+		for (var sy = sp1.y; sy < sp2.y; sy++){
+			var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
+			var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
+			var dy = dpy - dpbase.y;
+			var dh = y - dpy
+			dpy = y;
+
+			if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
+			if (sw2 > 0)  ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
+			if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
+		}
+
+		return;
+	},
+	
 });
 
 
