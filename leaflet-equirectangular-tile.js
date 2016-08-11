@@ -3,7 +3,7 @@
  * @inherits TileLayer
  * @author Yuta Tachibana
  *
- * for leaflet v1.0.0-rc1
+ * for leaflet v1.0.0-rc3
  *
  * fit equirectangular projection tiles to web mercator (spherical mercator)
  *
@@ -54,8 +54,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 	_getTileZoom: function (mapZoom) {
 		var sLatPx = 2 * L.Projection.SphericalMercator.MAX_LATITUDE / 256;
 		var eLatPx = this._tileBoundsLat / this.options.tileSize.x;
-		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2);
-
+		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2) - 2;
+		
 		return Math.max(0, Math.ceil(scale));
 	},
 
@@ -126,7 +126,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 	
 	_setView: function (center, zoom, noPrune, noUpdate) {
 		var tileZoom = Math.round(zoom);
-		var tileZoomChanged = (tileZoom !== this._tileZoom);
+		var tileZoomChanged = this.options.updateWhenZooming && (tileZoom !== this._tileZoom);
 
 		if (!noUpdate || tileZoomChanged) {
 
@@ -231,11 +231,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tile = this.createTile(coords, L.bind(this._tileReady, this, coords));
 
 		this._initTile(tile);
-		
-		// reset tile width, height
-		var tileSize = this._getTileSizeCoords(coords);
-		tile.style.width = tileSize.x + 'px';
-		tile.style.height = tileSize.y + 'px';
 
 		// if createTile is defined with a second argument ("done" callback),
 		// we know that tile is async and will be ready later; otherwise
@@ -262,6 +257,24 @@ L.EquirectangularTile = L.TileLayer.extend({
 		});
 	},
 	
+	_initTile: function (tile) {
+		L.DomUtil.addClass(tile, 'leaflet-tile');
+
+		tile.onselectstart = L.Util.falseFn;
+		tile.onmousemove = L.Util.falseFn;
+
+		// update opacity on tiles in IE7-8 because of filter inheritance problems
+		if (L.Browser.ielt9 && this.options.opacity < 1) {
+			L.DomUtil.setOpacity(tile, this.options.opacity);
+		}
+
+		// without this hack, tiles disappear after zoom on Chrome for Android
+		// https://github.com/Leaflet/Leaflet/issues/2078
+		if (L.Browser.android && !L.Browser.android23) {
+			tile.style.WebkitBackfaceVisibility = 'hidden';
+		}
+	},
+	
 	createTile: function (coords, done) {
 		if (coords.ez > coords.iz){
 			return this.createCanvasTileOverscaled(coords, done);
@@ -276,6 +289,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 
 		L.DomEvent.on(tile, 'load', L.bind(this._tileOnLoad, this, done, tile));
 		L.DomEvent.on(tile, 'error', L.bind(this._tileOnError, this, done, tile));
+		
+		var tileSize = this._getTileSizeCoords(coords);
+		tile.style.width = tileSize.x + 'px';
+		tile.style.height = tileSize.y + 'px';
 
 		tile.alt = '';
 		tile.src = this.getTileUrl(coords);
@@ -296,9 +313,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 		tile.width = tileSize.x;
 		tile.height = tileSize.y;
 
-		var sw = this.options.tileSize.x,
-			sh = this.options.tileSize.y;
-
 		var ctx = tile.getContext('2d');
 		var map = this;
 
@@ -311,61 +325,94 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var img = new Image();
 		img.src = this.getTileUrl(coords);
 		img.onload = function () {
-			var tileLat = map._tileBoundsLat / Math.pow(2, coords.ez),
-				tileLon = map._tileBoundsLon / Math.pow(2, coords.ez),
-				tilePos = map._getTileLatLng(coords);
-
-			var sTileLat = map._tileBoundsLat / Math.pow(2, coords.iz),
-				sTileLon = map._tileBoundsLon / Math.pow(2, coords.iz),
-				sTilePos = map._getTileLatLng({x: coords.ix, y: coords.iy, ez: coords.iz});
-
-			var sp1 = new L.Point(
-				Math.floor((tilePos.lng - sTilePos.lng) / (sTileLon / sw)),
-				Math.floor((sTilePos.lat - tilePos.lat) / (sTileLat / sh))
-			);
-			var sp2 = new L.Point(
-				Math.ceil(((tilePos.lng + tileLon) - sTilePos.lng) / (sTileLon / sw)),
-				Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
-			);
-
-			var dpbase = map._map.project(tilePos, coords.z).round(),
-				dpbase2x = dpbase.x + tile.width,
-				dpbase2y = dpbase.y + tile.height,
-				dpy = dpbase.y,
-				lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
-				lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
-				dp3x = map._map.project([0, lon3], coords.z).round().x,
-				dp4x = map._map.project([0, lon4], coords.z).round().x;
-
-			var sx1 = sp1.x,
-				sx2 = sp1.x + 1,
-				sx3 = sp2.x - 1,
-				sw2 = (sp2.x - 1) - (sp1.x + 1),
-				dx2 = dp3x - dpbase.x,
-				dx3 = dp4x - dpbase.x,
-				dw1 = dp3x - dpbase.x,
-				dw2 = dp4x - dp3x,
-				dw3 = dpbase2x - dp4x;
-
-			var check_p1 = (dp3x != dpbase.x),
-				check_p2 = (dp4x != dpbase2x);
-
-			for (var sy = sp1.y; sy < sp2.y; sy++){
-				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
-				var y = Math.min(map._map.project([l, 0], coords.z).round().y, dpbase2y);
-				var dy = dpy - dpbase.y;
-				var dh = y - dpy
-				dpy = y;
-
-				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
-				if (sw2 > 0) ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
-				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
-			}
+			map._drawCanvasTile(img, coords, ctx, tile);
+			tile.complete = true;
 			done(null, tile);
 		};
 
 		return tile;
 	},
+
+
+	_drawCanvasTile: function (img, coords, ctx, tile) {
+		var sw = this.options.tileSize.x,
+			sh = this.options.tileSize.y;
+
+		var tileLat = this._tileBoundsLat / Math.pow(2, coords.ez),
+			tileLon = this._tileBoundsLon / Math.pow(2, coords.ez),
+			tilePos = this._getTileLatLng(coords);
+
+		var sTileLat = this._tileBoundsLat / Math.pow(2, coords.iz),
+			sTileLon = this._tileBoundsLon / Math.pow(2, coords.iz),
+			sTilePos = this._getTileLatLng({x: coords.ix, y: coords.iy, ez: coords.iz});
+
+		var sp1 = new L.Point(
+			Math.floor((tilePos.lng - sTilePos.lng) / (sTileLon / sw)),
+			Math.floor((sTilePos.lat - tilePos.lat) / (sTileLat / sh))
+		);
+		var sp2 = new L.Point(
+			Math.ceil(((tilePos.lng + tileLon) - sTilePos.lng) / (sTileLon / sw)),
+			Math.ceil((sTilePos.lat - (tilePos.lat - tileLat)) / (sTileLat / sh))
+		);
+
+		var dpbase = this._map.project(tilePos, coords.z).round(),
+			dpbase2x = dpbase.x + tile.width,
+			dpbase2y = dpbase.y + tile.height,
+			dpy = dpbase.y,
+			lon3 = sTilePos.lng + sTileLon / sw * (sp1.x + 1),
+			lon4 = sTilePos.lng + sTileLon / sw * (sp2.x - 1),
+			dp3x = this._map.project([0, lon3], coords.z).round().x,
+			dp4x = this._map.project([0, lon4], coords.z).round().x;
+
+		var sx1 = sp1.x,
+			sx2 = sp1.x + 1,
+			sx3 = sp2.x - 1,
+			sw2 = (sp2.x - 1) - (sp1.x + 1),
+			dx2 = dp3x - dpbase.x,
+			dx3 = dp4x - dpbase.x,
+			dw1 = dp3x - dpbase.x,
+			dw2 = dp4x - dp3x,
+			dw3 = dpbase2x - dp4x;
+
+		var check_p1 = (dp3x != dpbase.x),
+			check_p2 = (dp4x != dpbase2x);
+
+		if (sp2.y - sp1.y < 10){
+			for (var sy = sp1.y; sy < sp2.y; sy++){
+				var l = sTilePos.lat - (sy + 1) * (sTileLat / sh);
+				var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
+				var dy = dpy - dpbase.y;
+				var dh = y - dpy
+				dpy = y;
+
+				if (check_p1) ctx.drawImage(img, sx1, sy,   1, 1,   0, dy, dw1, dh);
+				if (sw2 > 0)  ctx.drawImage(img, sx2, sy, sw2, 1, dx2, dy, dw2, dh);
+				if (check_p2) ctx.drawImage(img, sx3, sy,   1, 1, dx3, dy, dw3, dh);
+			}
+
+		}else{
+			var list = [sp1.y, sp1.y + 1, sp2.y - 1, sp2.y];
+
+			for (var i = 0; i < 3; i++){
+				var sy1 = list[i], sy2 = list[i+1];
+				var dsy = sy2 - sy1;
+				if (dsy <= 0) continue;
+
+				var l = sTilePos.lat - sy2 * (sTileLat / sh);
+				var y = Math.min(this._map.project([l, 0], coords.z).round().y, dpbase2y);
+				var dy = dpy - dpbase.y;
+				var dh = y - dpy
+				dpy = y;
+				
+				if (check_p1) ctx.drawImage(img, sx1, sy1,   1, dsy,   0, dy, dw1, dh);
+				if (sw2 > 0)  ctx.drawImage(img, sx2, sy1, sw2, dsy, dx2, dy, dw2, dh);
+				if (check_p2) ctx.drawImage(img, sx3, sy1,   1, dsy, dx3, dy, dw3, dh);
+			}
+		}
+
+		return;
+	},
+	
 });
 
 
