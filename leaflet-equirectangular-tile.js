@@ -76,8 +76,10 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var tileBounds = this.options.bounds,
 			tileOrigin = tileBounds.getNorthWest();
 
-		var tileLat = this._tileBoundsLat / Math.pow(2, tileZoom),
-			tileLon = this._tileBoundsLon / Math.pow(2, tileZoom);
+		var nTiles = Math.pow(2, tileZoom),
+			maxT = nTiles - 1,
+			tileLat = this._tileBoundsLat / nTiles,
+			tileLon = this._tileBoundsLon / nTiles;
 
 		var N = Math.floor((tileOrigin.lat - mapBounds.getNorth()) / tileLat),
 			W = Math.floor((mapBounds.getWest() - tileOrigin.lng) / tileLon),
@@ -85,8 +87,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 			E = Math.floor((mapBounds.getEast() - tileOrigin.lng) / tileLon);
 
 		return new L.Bounds(
-			[Math.max(W, 0), Math.max(N, 0)],
-			[Math.min(E, Math.pow(2, tileZoom) - 1), Math.min(S, Math.pow(2, tileZoom) - 1)]
+			[Math.max(Math.min(W, maxT), 0), Math.max(Math.min(N, maxT), 0)],
+			[Math.max(Math.min(E, maxT), 0), Math.max(Math.min(S, maxT), 0)]
 		);
 	},
 
