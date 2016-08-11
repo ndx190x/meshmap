@@ -28,6 +28,7 @@ function EquirectangularTile(url, options, map){
 /** @public methods called by google maps */
 EquirectangularTile.prototype.onAdd = function() {
 	var div = document.createElement('div');
+	div.style.opacity = 0.7;
 	this.div_ = div;
 
 	this.leaflet.customOverlay(this.map, div, this.getProjection());
