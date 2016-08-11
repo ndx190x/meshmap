@@ -9,6 +9,10 @@
  *
  * fit equirectangular projection tiles to spherical mercator
  *
+ * requirements:
+ * 	leaflet.js v1.0
+ * 	leaflet-equirectangular.js
+ *
  */
 
 EquirectangularTile.prototype = new google.maps.OverlayView();
@@ -57,7 +61,7 @@ EquirectangularTile.prototype.onRemove = function() {
 };
 
 
-/** @private methods */
+/** wrapper to L.EquirectangularTile */
 L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	
 	customOverlay: function (map, div, projection) {
@@ -83,10 +87,7 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		this._tileZoom = null;
 	},
 
-	/*
-	 *  wraper to google maps
-	 *
-	 */
+	/**  wraper to google maps */
 	_getZoom: function () {
 		return this.gmap.getZoom();
 	},
@@ -117,11 +118,7 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	},
 
 
-	/*
-	 *  override
-	 *
-	 *  disable level.origin
-	 */
+	/**  override - disable level.origin */
 	_updateLevels: function () {
 
 		var zoom = this._tileZoom,
