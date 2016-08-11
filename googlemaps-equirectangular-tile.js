@@ -37,6 +37,12 @@ EquirectangularTile.prototype.onAdd = function() {
 	// add layer to the overlayLayer pane
 	var panes = this.getPanes();
 	panes.overlayLayer.appendChild(div);
+
+	// add bounds changed event listener
+	var leaflet = this.leaflet;
+	this.bounds_changed = this.map.addListener("bounds_changed", function() {
+		leaflet._update();
+	});
 };
 
 EquirectangularTile.prototype.draw = function() {
@@ -47,6 +53,7 @@ EquirectangularTile.prototype.onRemove = function() {
 	this.leaflet.onRemove();
 	this.div_.parentNode.removeChild(this.div_);
 	this.div_ = null;
+	google.maps.event.clearInstanceListeners(this.map);
 };
 
 
