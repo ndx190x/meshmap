@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.3/leaflet.css" />
+	<style>
+		body { margin:0; padding:0; }
+		#map { position:absolute; top:0; bottom:0; width:100%;  }
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+
+	<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.3/leaflet.js"></script>
+	<script src="http://maps.google.com/maps/api/js?v=3&key=AIzaSyDXukA2WmcgYQKPMC9D9E68n1WjQoVEhXE"></script>
+	<script src="../leaflet-equirectangular-tile.js"></script>
+	<script src="../googlemaps-equirectangular-tile.js"></script>
+	<script>
+		var map = new google.maps.Map(document.getElementById('map'), {
+			zoom: 6,
+			center: {lat: 37.892, lng: 137.571},
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		});
+
+		var overlay = new EquirectangularTile("tiles/{z}/{x}_{y}.png", {}, map);
+	</script>
+</body>
+</html>
