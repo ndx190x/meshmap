@@ -56,7 +56,7 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var eLatPx = this._tileBoundsLat / this.options.tileSize.x;
 		var scale = mapZoom + Math.log(eLatPx / sLatPx) / Math.log(2) - 2;
 		
-		return Math.max(0, Math.ceil(scale));
+		return Math.max(Math.ceil(scale), this.options.tileZoom[0]);
 	},
 
 	_getTileImageZoom: function (tileZoom) {
