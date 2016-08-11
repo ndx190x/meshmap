@@ -120,38 +120,8 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	/*
 	 *  override
 	 *
+	 *  disable level.origin
 	 */
-	_setView: function (center, zoom, noPrune, noUpdate) {
-		var tileZoom = Math.round(zoom);
-		var tileZoomChanged = this.options.updateWhenZooming && (tileZoom !== this._tileZoom);
-
-		if (!noUpdate || tileZoomChanged) {
-
-			this._tileZoom = tileZoom;
-			this.tileZoom = this._getTileZoom(tileZoom);
-
-			if (this._abortLoading) {
-				this._abortLoading();
-			}
-
-			this._updateLevels();
-
-			if (tileZoom !== undefined) {
-				this._update(center);
-			}
-
-			if (!noPrune) {
-				this._pruneTiles();
-			}
-
-			// Flag to prevent _updateOpacity from pruning tiles during
-			// a zoom anim or a pinch gesture
-			this._noPrune = !!noPrune;
-		}
-
-		//this._setZoomTransforms(center, zoom);
-	},
-
 	_updateLevels: function () {
 
 		var zoom = this._tileZoom,
@@ -181,7 +151,7 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 			level.origin = new L.Point(0, 0);
 			level.zoom = zoom;
 
-			//this._setZoomTransform(level, map.getCenter(), map.getZoom());
+			this._setZoomTransform(level, map.getCenter(), map.getZoom());
 
 			// force the browser to consider the newly added element for transition
 			L.Util.falseFn(level.el.offsetWidth);
@@ -193,9 +163,8 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	},
 	
 	_setZoomTransform: function (level, center, zoom) {
-		var scale = this._map.getZoomScale(zoom, level.zoom),
-		    translate = level.origin.multiplyBy(scale)
-		        .subtract(this._map._getNewPixelOrigin(center, zoom)).round();
+		var scale = Math.pow(2, zoom) / Math.pow(2, level.zoom),
+			translate = new L.Point(0, 0);
 
 		if (L.Browser.any3d) {
 			L.DomUtil.setTransform(level.el, translate, scale);
