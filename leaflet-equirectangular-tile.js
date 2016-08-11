@@ -325,7 +325,8 @@ L.EquirectangularTile = L.TileLayer.extend({
 		var img = new Image();
 		img.src = this.getTileUrl(coords);
 		img.onload = function () {
-			var r = map._drawCanvasTile(img, coords, ctx, tile);
+			map._drawCanvasTile(img, coords, ctx, tile);
+			tile.complete = true;
 			done(null, tile);
 		};
 
