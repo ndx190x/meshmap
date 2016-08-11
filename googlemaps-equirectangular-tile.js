@@ -102,9 +102,13 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 			sw = bounds.getSouthWest(),
 			ne = bounds.getNorthEast();
 
+		// google maps getBounds lng must be from -180 to 180
+		var w = sw.lng(),
+			e = (ne.lng() > 0) ? ne.lng() : 180 - ne.lng();
+
 		return L.latLngBounds([
-			[sw.lat(), sw.lng()],
-			[ne.lat(), ne.lng()]
+			[sw.lat(), w],
+			[ne.lat(), e]
 		]);
 	},
 
