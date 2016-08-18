@@ -22,6 +22,7 @@ EquirectangularTile.prototype = new google.maps.OverlayView();
 function EquirectangularTile(url, options, map){
 	this.map = map;
 	this.div_ = null;
+	this.opacity = 0.7;
 	
 	this.leaflet = new L.EquirectangularTileGoogle(url, options);
 
@@ -32,7 +33,7 @@ function EquirectangularTile(url, options, map){
 /** @public methods called by google maps */
 EquirectangularTile.prototype.onAdd = function() {
 	var div = document.createElement('div');
-	div.style.opacity = 0.7;
+	L.DomUtil.setOpacity(div, this.opacity);
 	this.div_ = div;
 
 	this.leaflet.customOverlay(this.map, div, this.getProjection());
