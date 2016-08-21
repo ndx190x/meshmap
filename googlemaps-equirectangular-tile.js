@@ -122,6 +122,10 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		return new L.Point(p.x, p.y);
 	},
 
+	getTileUrl: function (coords){
+		return "http://fakeimg.pl/320x420/" + randomColor().slice(1) + "/";
+	},
+
 
 	/**  override - disable level.origin */
 	_updateLevels: function () {
