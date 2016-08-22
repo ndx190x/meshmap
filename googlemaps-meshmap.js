@@ -65,6 +65,19 @@ MeshMap.prototype.onRemove = function() {
 	google.maps.event.clearInstanceListeners(this.map);
 };
 
+MeshMap.prototype.hide = function() {
+	if (this.div_) {
+		this.div_.style.visibility = 'hidden';
+	}
+};
+
+MeshMap.prototype.show = function() {
+	if (this.div_) {
+		this.div_.style.visibility = 'visible';
+	}
+};
+			  
+
 
 /** wrapper to L.MeshMap */
 L.MeshMapGoogle = L.MeshMap.extend({
