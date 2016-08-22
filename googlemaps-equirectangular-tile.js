@@ -81,6 +81,14 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		};
 	},
 	
+	onAdd: function () {
+		this._initContainer();
+
+		this._levels = {};
+		this._tiles = {};
+		this._resetView();
+	},
+
 	onRemove: function () {
 		this._removeAllTiles();
 		L.DomUtil.remove(this._container);
@@ -154,10 +162,12 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 			level.el = L.DomUtil.create('div', 'leaflet-tile-container leaflet-zoom-animated', this._container);
 			level.el.style.zIndex = maxZoom;
 
+			// google maps LatLngToDivPixel id relative to map div
+			// leaflet origin has no meanings
 			level.origin = new L.Point(0, 0);
 			level.zoom = zoom;
 
-			this._setZoomTransform(level, map.getCenter(), map.getZoom());
+			//this._setZoomTransform(level, map.getCenter(), map.getZoom());
 
 			// force the browser to consider the newly added element for transition
 			L.Util.falseFn(level.el.offsetWidth);
@@ -168,16 +178,19 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		return level;
 	},
 	
-	_setZoomTransform: function (level, center, zoom) {
-		var scale = Math.pow(2, zoom) / Math.pow(2, level.zoom),
-			translate = new L.Point(0, 0);
-
-		if (L.Browser.any3d) {
-			L.DomUtil.setTransform(level.el, translate, scale);
-		} else {
-			L.DomUtil.setPosition(level.el, translate);
+	// zoom transform for each tiles
+	_setZoomTransforms: function (center, zoom) {
+		for (var t in this._tiles) {
+			var tile = this._tiles[t];
+			var pos = this._getTilePos(tile.coords);
+			var tileSize = this._getTileSizeCoords(tile.coords);
+			
+			tile.el.style.width = tileSize.x + 'px';
+			tile.el.style.height = tileSize.y + 'px';
+			L.DomUtil.setPosition(tile.el, pos);
 		}
 	},
+	
 	
 });
 
