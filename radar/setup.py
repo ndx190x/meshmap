@@ -7,7 +7,7 @@ setup(
     cmdclass = {'build_ext': build_ext},
     ext_modules = [
         Extension("radar", ["radar.pyx"]),
-        Extension("grib2tile", ["grib2tile.pyx"])
+        Extension("meshmap", ["../meshmap.pyx"])
     ],
     include_dirs = [numpy.get_include()]
 )
