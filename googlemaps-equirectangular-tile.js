@@ -44,9 +44,13 @@ EquirectangularTile.prototype.onAdd = function() {
 	panes.overlayLayer.appendChild(div);
 
 	// add bounds changed event listener
-	var leaflet = this.leaflet;
-	this.bounds_changed = this.map.addListener("bounds_changed", function() {
+	var leaflet = this.leaflet,
+		map = this.map;
+	this.map.addListener("bounds_changed", function() {
 		leaflet._update();
+	});
+	this.map.addListener("zoom_changed", function() {
+		leaflet._setView(map.getCenter(), map.getZoom(), true);
 	});
 };
 
@@ -56,7 +60,6 @@ EquirectangularTile.prototype.draw = function() {
 
 EquirectangularTile.prototype.onRemove = function() {
 	this.leaflet.onRemove();
-	this.div_.parentNode.removeChild(this.div_);
 	this.div_ = null;
 	google.maps.event.clearInstanceListeners(this.map);
 };
@@ -81,6 +84,14 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		};
 	},
 	
+	onAdd: function () {
+		this._initContainer();
+
+		this._levels = {};
+		this._tiles = {};
+		this._resetView();
+	},
+
 	onRemove: function () {
 		this._removeAllTiles();
 		L.DomUtil.remove(this._container);
@@ -150,10 +161,12 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 			level.el = L.DomUtil.create('div', 'leaflet-tile-container leaflet-zoom-animated', this._container);
 			level.el.style.zIndex = maxZoom;
 
+			// google maps LatLngToDivPixel id relative to map div
+			// leaflet origin has no meanings
 			level.origin = new L.Point(0, 0);
 			level.zoom = zoom;
 
-			this._setZoomTransform(level, map.getCenter(), map.getZoom());
+			//this._setZoomTransform(level, map.getCenter(), map.getZoom());
 
 			// force the browser to consider the newly added element for transition
 			L.Util.falseFn(level.el.offsetWidth);
@@ -164,16 +177,22 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 		return level;
 	},
 	
-	_setZoomTransform: function (level, center, zoom) {
-		var scale = Math.pow(2, zoom) / Math.pow(2, level.zoom),
-			translate = new L.Point(0, 0);
+	// zoom transform for each tiles
+	_setZoomTransforms: function (center, zoom) {
+		for (var t in this._tiles) {
+			var tile = this._tiles[t];
 
-		if (L.Browser.any3d) {
-			L.DomUtil.setTransform(level.el, translate, scale);
-		} else {
-			L.DomUtil.setPosition(level.el, translate);
+			if (Math.abs(tile.coords.z - zoom) <= 1){
+				var pos = this._getTilePos(tile.coords);
+				var tileSize = this._getTileSizeCoords(tile.coords);
+				
+				tile.el.style.width = tileSize.x + 'px';
+				tile.el.style.height = tileSize.y + 'px';
+				L.DomUtil.setPosition(tile.el, pos);
+			}
 		}
 	},
+	
 	
 });
 
