@@ -1,16 +1,18 @@
 /*
- * @class L.equrectangularTile
+ * @class L.MeshMap
  * @inherits TileLayer
  * @author Yuta Tachibana
  *
  * for leaflet v1.0.0-rc3
  *
- * fit equirectangular projection tiles to web mercator (spherical mercator)
+ * Project mesh data to web map.
+ *
+ * Fit equirectangular grid tiles to spherical mercator.
+ * And when zooming in, draw on canvas to reduce data tiles.
  *
  */
 
-L.EquirectangularTile = L.TileLayer.extend({
-
+L.MeshMap = L.TileLayer.extend({
 
 	options: {
 		bounds: new L.latLngBounds([20.0, 118.0], [48.0, 150.0]),
@@ -418,6 +420,6 @@ L.EquirectangularTile = L.TileLayer.extend({
 });
 
 
-L.equirectangularTile = function () {
-	return new L.EquirectangularTile();
+L.meshMap = function () {
+	return new L.meshMap();
 };
