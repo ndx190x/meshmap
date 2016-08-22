@@ -1,5 +1,5 @@
 /*
- * @class EqurectangularTile
+ * @class MeshMap
  * @author Yuta Tachibana
  *
  * for Google Maps API v3
@@ -7,31 +7,32 @@
  * use google maps custom overlay
  * https://developers.google.com/maps/documentation/javascript/customoverlays
  *
- * fit equirectangular projection tiles to spherical mercator
+ * Project mesh data on web map.
+ * Fit equirectangular projection tiles to spherical mercator.
  *
  * requirements:
  * 	leaflet.js v1.0
- * 	leaflet-equirectangular.js
+ * 	leaflet-meshmap.js
  *
  */
 
-EquirectangularTile.prototype = new google.maps.OverlayView();
+MeshMap.prototype = new google.maps.OverlayView();
 
 
 /** @constructor */
-function EquirectangularTile(url, options, map){
+function MeshMap(url, options, map){
 	this.map = map;
 	this.div_ = null;
 	this.opacity = 0.7;
 	
-	this.leaflet = new L.EquirectangularTileGoogle(url, options);
+	this.leaflet = new L.MeshMapGoogle(url, options);
 
 	this.setMap(map);
 }
 
 
 /** @public methods called by google maps */
-EquirectangularTile.prototype.onAdd = function() {
+MeshMap.prototype.onAdd = function() {
 	var div = document.createElement('div');
 	L.DomUtil.setOpacity(div, this.opacity);
 	this.div_ = div;
@@ -54,19 +55,19 @@ EquirectangularTile.prototype.onAdd = function() {
 	});
 };
 
-EquirectangularTile.prototype.draw = function() {
+MeshMap.prototype.draw = function() {
 	this.leaflet._update();
 };
 
-EquirectangularTile.prototype.onRemove = function() {
+MeshMap.prototype.onRemove = function() {
 	this.leaflet.onRemove();
 	this.div_ = null;
 	google.maps.event.clearInstanceListeners(this.map);
 };
 
 
-/** wrapper to L.EquirectangularTile */
-L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
+/** wrapper to L.MeshMap */
+L.MeshMapGoogle = L.MeshMap.extend({
 	
 	customOverlay: function (map, div, projection) {
 		this._gmap = map; // google maps
@@ -134,7 +135,7 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	},
 
 
-	/**  override - disable level.origin */
+	/**  override */
 	_updateLevels: function () {
 
 		var zoom = this._tileZoom,

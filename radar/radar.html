@@ -14,8 +14,8 @@
 
 	<script src="http://cdn.leafletjs.com/leaflet/v1.0.0-rc.3/leaflet.js"></script>
 	<script src="http://maps.google.com/maps/api/js?v=3&key=AIzaSyDXukA2WmcgYQKPMC9D9E68n1WjQoVEhXE"></script>
-	<script src="../leaflet-equirectangular-tile.js"></script>
-	<script src="../googlemaps-equirectangular-tile.js"></script>
+	<script src="../leaflet-meshmap.js"></script>
+	<script src="../googlemaps-meshmap.js"></script>
 	<script>
 		var map = new google.maps.Map(document.getElementById('map'), {
 			zoom: 6,
@@ -23,7 +23,7 @@
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		});
 
-		var overlay = new EquirectangularTile("tiles/{z}/{x}_{y}.png", {}, map);
+		var overlay = new MeshMap("tiles/{z}/{x}_{y}.png", {}, map);
 	</script>
 </body>
 </html>

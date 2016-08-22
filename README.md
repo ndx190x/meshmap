@@ -1,11 +1,15 @@
-# Grib2tile
+# MeshMap
 
-Create tiles from grib2 data  
-http://tattii.github.io/grib2tile/radar/radar.html
+Create mesh tiles and project to web maps.  
+Fit equirectangular grid mesh data to spherical mercator.
+
++ Google Maps http://tattii.github.io/grib2tile/radar/radar.html
++ Leaflet http://tattii.github.io/grib2tile/radar/radar-leaflet.html
 
 ## Usage
 ```
 $ pip install -r requirements.txt
+$ cd radar
 $ python setup.py build_ext --inplace
 $ wget <radar file>
 $ tar -xf <radar file>
