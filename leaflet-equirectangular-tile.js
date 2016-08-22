@@ -35,12 +35,11 @@ L.EquirectangularTile = L.TileLayer.extend({
 	},
 
 	getTileUrl: function (coords) {
-		//return L.Util.template(this._url, {
-		//	x: coords.ix,
-		//	y: coords.iy,
-		//	z: coords.iz	
-		//});
-		return "http://fakeimg.pl/320x420/" + randomColor().slice(1) + "/";
+		return L.Util.template(this._url, {
+			x: coords.ix,
+			y: coords.iy,
+			z: coords.iz	
+		});
 	},
 
 
