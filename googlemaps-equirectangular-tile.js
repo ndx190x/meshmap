@@ -60,7 +60,6 @@ EquirectangularTile.prototype.draw = function() {
 
 EquirectangularTile.prototype.onRemove = function() {
 	this.leaflet.onRemove();
-	this.div_.parentNode.removeChild(this.div_);
 	this.div_ = null;
 	google.maps.event.clearInstanceListeners(this.map);
 };
