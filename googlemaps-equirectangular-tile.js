@@ -44,9 +44,13 @@ EquirectangularTile.prototype.onAdd = function() {
 	panes.overlayLayer.appendChild(div);
 
 	// add bounds changed event listener
-	var leaflet = this.leaflet;
-	this.bounds_changed = this.map.addListener("bounds_changed", function() {
+	var leaflet = this.leaflet,
+		map = this.map;
+	this.map.addListener("bounds_changed", function() {
 		leaflet._update();
+	});
+	this.map.addListener("zoom_changed", function() {
+		leaflet._setView(map.getCenter(), map.getZoom(), true);
 	});
 };
 
@@ -182,12 +186,15 @@ L.EquirectangularTileGoogle = L.EquirectangularTile.extend({
 	_setZoomTransforms: function (center, zoom) {
 		for (var t in this._tiles) {
 			var tile = this._tiles[t];
-			var pos = this._getTilePos(tile.coords);
-			var tileSize = this._getTileSizeCoords(tile.coords);
-			
-			tile.el.style.width = tileSize.x + 'px';
-			tile.el.style.height = tileSize.y + 'px';
-			L.DomUtil.setPosition(tile.el, pos);
+
+			if (Math.abs(tile.coords.z - zoom) <= 1){
+				var pos = this._getTilePos(tile.coords);
+				var tileSize = this._getTileSizeCoords(tile.coords);
+				
+				tile.el.style.width = tileSize.x + 'px';
+				tile.el.style.height = tileSize.y + 'px';
+				L.DomUtil.setPosition(tile.el, pos);
+			}
 		}
 	},
 	
