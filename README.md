@@ -3,8 +3,8 @@
 Create mesh tiles and project to web maps.  
 Fit equirectangular grid mesh data to spherical mercator.
 
-+ Google Maps http://tattii.github.io/grib2tile/radar/radar.html
-+ Leaflet http://tattii.github.io/grib2tile/radar/radar-leaflet.html
++ Google Maps http://tattii.github.io/meshmap/radar/radar.html
++ Leaflet http://tattii.github.io/meshmap/radar/radar-leaflet.html
 
 ## Usage
 ```
